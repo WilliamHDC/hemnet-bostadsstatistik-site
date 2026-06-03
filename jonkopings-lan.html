@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bostadsmarknaden i Jönköpings Län | 2020–2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+  :root {
+    --dark:    #013a14;
+    --medium:  #007e47;
+    --accent:  #0bb70b;
+    --bg:      #e4e8da;
+    --white:   #ffffff;
+    --card-bg: #ffffff;
+    --text:    #1a1a1a;
+    --muted:   #5a6a5e;
+    --border:  #c5d4bc;
+    --neg:     #c0392b;
+    --pos:     #007e47;
+    --shadow:  0 2px 12px rgba(1,58,20,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── NAV ── */
+  nav {
+    background: var(--dark);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .nav-logo {
+    font-size: 18px; font-weight: 700; color: #fff;
+    letter-spacing: -.3px; text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-home {
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    padding: 6px 12px; border-radius: 6px; transition: all .15s;
+    white-space: nowrap;
+  }
+  .nav-home:hover, .nav-home.active { background: rgba(255,255,255,.12); color: #fff; }
+
+  /* ── Dropdown ── */
+  .nav-dropdown { position: relative; margin-left: 4px; }
+  .nav-dropdown-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    font-family: 'Roboto', sans-serif;
+    padding: 6px 14px; border-radius: 6px;
+    background: transparent; border: 1px solid rgba(255,255,255,.2);
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .nav-dropdown-btn:hover, .nav-dropdown.open .nav-dropdown-btn {
+    background: rgba(255,255,255,.12); color: #fff;
+    border-color: rgba(255,255,255,.35);
+  }
+  .nav-dropdown-btn .chevron {
+    font-size: 10px; transition: transform .2s; display: inline-block;
+  }
+  .nav-dropdown.open .chevron { transform: rotate(180deg); }
+
+  .nav-dropdown-panel {
+    display: none;
+    position: absolute; top: calc(100% + 8px); left: 0;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(1,58,20,.18);
+    border: 1px solid var(--border);
+    z-index: 200; min-width: 480px;
+    padding: 8px;
+    columns: 2; column-gap: 0;
+  }
+  .nav-dropdown.open .nav-dropdown-panel { display: block; }
+
+  .nav-dropdown-panel a {
+    display: block; break-inside: avoid;
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 400; color: var(--text);
+    transition: background .12s, color .12s;
+    white-space: nowrap;
+  }
+  .nav-dropdown-panel a:hover { background: var(--bg); color: var(--dark); }
+  .nav-dropdown-panel a.active {
+    background: var(--dark); color: #fff; font-weight: 600;
+  }
+  .nav-dropdown-divider {
+    height: 1px; background: var(--border); margin: 4px 8px;
+    break-inside: avoid; column-span: all;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 56px 32px 48px;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; }
+  .hero-breadcrumb {
+    font-size: 12px; color: rgba(255,255,255,.55);
+    margin-bottom: 12px; letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+  .hero-breadcrumb a { color: rgba(255,255,255,.55); }
+  .hero-breadcrumb a:hover { color: rgba(255,255,255,.9); }
+  .hero h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700; letter-spacing: -.5px;
+    margin-bottom: 6px;
+  }
+  .hero-subtitle {
+    font-size: 15px; color: rgba(255,255,255,.65);
+    font-weight: 300; margin-bottom: 32px;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    backdrop-filter: blur(4px);
+  }
+  .hero-stat-label {
+    font-size: 11px; color: rgba(255,255,255,.55);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
+  .hero-stat-value {
+    font-size: 22px; font-weight: 700;
+    line-height: 1.1;
+  }
+  .hero-stat-sub {
+    font-size: 12px; margin-top: 4px;
+    font-weight: 400;
+  }
+  .hero-stat-sub.positive { color: #6ef06e; }
+  .hero-stat-sub.negative { color: #ff8a80; }
+
+  /* ── MAIN CONTENT ── */
+  .page-content { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: '';
+    width: 4px; height: 24px;
+    background: var(--medium);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .chart-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--dark); margin-bottom: 4px;
+  }
+  .chart-subtitle {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .chart-container { position: relative; height: 260px; }
+
+  /* ── ANALYSIS ── */
+  .analysis-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px 36px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .analysis-card p {
+    color: #2a3a2e;
+    font-size: 15px; line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .analysis-card p:last-child { margin-bottom: 0; }
+  .analysis-card strong { color: var(--dark); }
+
+  /* ── YOY TABLE ── */
+  .yoy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .yoy-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .yoy-period {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .4px;
+    margin-bottom: 6px; font-weight: 500;
+  }
+  .yoy-value {
+    font-size: 22px; font-weight: 700;
+  }
+  .yoy-value.positive { color: var(--pos); }
+  .yoy-value.negative { color: var(--neg); }
+
+  /* ── TYPE FILTER ── */
+  .type-filter {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .type-btn {
+    padding: 7px 16px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--card-bg); color: var(--muted);
+    font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+  }
+  .type-btn:hover { border-color: var(--medium); color: var(--dark); }
+  .type-btn.active {
+    background: var(--dark); border-color: var(--dark);
+    color: #fff;
+  }
+
+  /* ── KOMMUNER TABLE ── */
+  .kom-table-wrap {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+    overflow-x: auto;
+  }
+  .kom-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  .kom-table thead th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px;
+    color: var(--muted); padding: 0 12px 12px 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .kom-table thead th:not(:first-child) { text-align: right; }
+  .kom-table tbody tr { border-bottom: 1px solid var(--border); }
+  .kom-table tbody tr:last-child { border-bottom: none; }
+  .kom-table tbody td {
+    padding: 12px 12px 12px 0;
+    color: var(--text);
+  }
+  .kom-table tbody td:not(:first-child) { text-align: right; }
+  .kom-rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bg); font-size: 11px; font-weight: 700;
+    color: var(--muted); margin-right: 10px;
+  }
+  .kom-rank.top { background: var(--dark); color: #fff; }
+  .kom-growth { font-weight: 700; }
+  .kom-growth.positive { color: var(--pos); }
+  .kom-growth.negative { color: var(--neg); }
+
+  /* ── INDEX CARDS ── */
+  .lan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .lan-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    transition: transform .15s, box-shadow .15s;
+    cursor: pointer;
+  }
+  .lan-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(1,58,20,.15);
+  }
+  .lan-card-region {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 6px;
+  }
+  .lan-card-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+  }
+  .lan-card-stats { display: flex; flex-direction: column; gap: 12px; }
+  .lan-card-stat-row {
+    display: flex; justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lan-card-stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .lan-stat-label { font-size: 12px; color: var(--muted); }
+  .lan-stat-val { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .lan-stat-chg { font-size: 12px; font-weight: 600; }
+  .lan-stat-chg.positive { color: var(--pos); }
+  .lan-stat-chg.negative { color: var(--neg); }
+  .lan-card-cta {
+    margin-top: 20px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--medium);
+  }
+  .lan-card-cta:hover { color: var(--dark); }
+
+  /* ── INDEX HERO ── */
+  .index-hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 64px 32px 56px;
+    text-align: center;
+  }
+  .index-hero h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700; letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .index-hero p {
+    font-size: 17px; color: rgba(255,255,255,.65);
+    max-width: 560px; margin: 0 auto 40px;
+  }
+  .index-hero-stats {
+    display: flex; justify-content: center; gap: 48px;
+    flex-wrap: wrap;
+  }
+  .index-hero-stat { text-align: center; }
+  .index-hero-stat-val { font-size: 32px; font-weight: 700; }
+  .index-hero-stat-label { font-size: 12px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark);
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    padding: 28px 32px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  footer a { color: rgba(255,255,255,.7); }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+    <nav>
+      <a class="nav-logo" href="index.html">&#9632;<span>Bostads</span>data</a>
+      <a href="index.html" class="nav-home">Översikt</a>
+      <div class="nav-dropdown" id="navDropdown">
+        <button class="nav-dropdown-btn" onclick="toggleNav()" aria-haspopup="true">
+          Jönköpings Län<span class="chevron">&#9660;</span>
+        </button>
+        <div class="nav-dropdown-panel" role="menu">
+          <a href="blekinge-lan.html">Blekinge Län</a>
+      <a href="dalarnas-lan.html">Dalarnas Län</a>
+      <a href="gotlands-lan.html">Gotlands Län</a>
+      <a href="gavleborgs-lan.html">Gävleborgs Län</a>
+      <a href="hallands-lan.html">Hallands Län</a>
+      <a href="jamtlands-lan.html">Jämtlands Län</a>
+      <a href="jonkopings-lan.html" class="active">Jönköpings Län</a>
+      <a href="kalmar-lan.html">Kalmar Län</a>
+      <a href="kronobergs-lan.html">Kronobergs Län</a>
+      <a href="norrbottens-lan.html">Norrbottens Län</a>
+      <a href="skane-lan.html">Skåne Län</a>
+      <a href="stockholms-lan.html">Stockholms Län</a>
+      <a href="sodermanlands-lan.html">Södermanlands Län</a>
+      <a href="uppsala-lan.html">Uppsala Län</a>
+      <a href="varmlands-lan.html">Värmlands Län</a>
+      <a href="vasterbottens-lan.html">Västerbottens Län</a>
+      <a href="vasternorrlands-lan.html">Västernorrlands Län</a>
+      <a href="vastmanlands-lan.html">Västmanlands Län</a>
+      <a href="vastragotalands-lan.html">Västra Götalands Län</a>
+      <a href="orebro-lan.html">Örebro Län</a>
+      <a href="ostergotlands-lan.html">Östergötlands Län</a>
+      
+        </div>
+      </div>
+    </nav>
+    <script>
+    function toggleNav() {
+      document.getElementById('navDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var d = document.getElementById('navDropdown');
+      if (d && !d.contains(e.target)) d.classList.remove('open');
+    });
+    </script>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-breadcrumb">
+      <a href="index.html">Översikt</a> &rsaquo; Jönköpings Län
+    </div>
+    <h1>Bostadsmarknaden i Jönköpings Län</h1>
+    <p class="hero-subtitle">Götaland &middot; Marknadsdata januari 2020 – mars 2026</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-label">Genomsnittspris 2025</div>
+        <div class="hero-stat-value">2,26 Mkr</div>
+        <div class="hero-stat-sub positive">↑ +2,0% jämfört med 2024</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Förändring sedan 2020</div>
+        <div class="hero-stat-value">+14,0%</div>
+        <div class="hero-stat-sub" style="color:rgba(255,255,255,.5)">Från 1,98 Mkr → 2,26 Mkr</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Rekordpris</div>
+        <div class="hero-stat-value">2,57 Mkr</div>
+        <div class="hero-stat-sub negative">Sep 2022 &nbsp;·&nbsp; -7,7% från topp</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Utbud (snitt 2025)</div>
+        <div class="hero-stat-value">1 935</div>
+        <div class="hero-stat-sub positive">↑ +115,7% sedan 2020</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-content">
+
+  <!-- Charts -->
+  <h2 class="section-title">Prisutveckling &amp; utbud i Jönköpings Län</h2>
+  <div class="type-filter">
+    <button class="type-btn active" onclick="switchChartType('ALL',this)">Alla typer</button>
+    <button class="type-btn" onclick="switchChartType('HOUSE',this)">Villor</button>
+    <button class="type-btn" onclick="switchChartType('APARTMENT',this)">Lägenheter</button>
+    <button class="type-btn" onclick="switchChartType('VACATION_HOME',this)">Fritidshus</button>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Utgångsprisernas utveckling</div>
+      <div class="chart-subtitle">Genomsnittligt utgångspris per månad (kr), alla bostadstyper</div>
+      <div class="chart-container"><canvas id="priceChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Utbudets utveckling</div>
+      <div class="chart-subtitle">Antal annonser på marknaden per månad</div>
+      <div class="chart-container"><canvas id="supplyChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- YoY changes -->
+  <h2 class="section-title">Årsvis prisutveckling i Jönköpings Län</h2>
+  <div class="yoy-grid">
+    
+        <div class="yoy-card">
+          <div class="yoy-period">2020→2021</div>
+          <div class="yoy-value positive">↑ +5,7%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2021→2022</div>
+          <div class="yoy-value positive">↑ +8,9%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2022→2023</div>
+          <div class="yoy-value positive">↑ +0,3%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2023→2024</div>
+          <div class="yoy-value negative">↓ -3,2%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2024→2025</div>
+          <div class="yoy-value positive">↑ +2,0%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2025→2026</div>
+          <div class="yoy-value negative">↓ -2,5%</div>
+        </div>
+  </div>
+
+  <!-- Analysis -->
+  <h2 class="section-title">Marknadsanalys – Jönköpings Län</h2>
+  <div class="analysis-card">
+    
+    <p>Jönköpings Läns bostadsmarknad har genomgått en prisuppgång om
+    <strong>+14,0%</strong> under perioden 2020–2025, från
+    1,98 Mkr till 2,26 Mkr i genomsnittligt utgångspris.
+    Marknaden nådde sin topp i <strong>Sep 2022</strong> vid 2,57 Mkr,
+    och befinner sig för närvarande -7,7% från den nivån.</p>
+
+    <p>Riksbankens räntehöjningar 2022–2023 dämpade prisutvecklingen med
+    +0,3%, men marknaden har sedan dess återhämtat sig.
+    Under 2025 noterades en prisförändring om <strong>+2,0%</strong>
+    jämfört med 2024 — länet befinner sig i ett stabiliseringsläge och marknaden är balanserad.</p>
+
+    <p>Bland länets kommuner utmärker sig <strong>Sävsjö</strong> och <strong>Värnamo</strong> samt <strong>Eksjö</strong> med den starkaste
+    prisutvecklingen sedan 2020. Utbudet av bostäder har ökat med
+    <strong>+115,7%</strong> sedan 2020, från i snitt
+    897 till 1 935 annonser per månad.
+    Det ökade utbudet ger köpare ett brett urval på marknaden.</p>
+    
+  </div>
+
+  <!-- Kommuner ranking table — by type -->
+  <h2 class="section-title">Kommuner med starkast prisutveckling i Jönköpings Län</h2>
+  
+    <div class="type-filter"><button class="type-btn active" onclick="switchKomTable('jonkoping','ALL',this)">Alla typer</button><button class="type-btn" onclick="switchKomTable('jonkoping','HOUSE',this)">Villor</button><button class="type-btn" onclick="switchKomTable('jonkoping','APARTMENT',this)">Lägenheter</button><button class="type-btn" onclick="switchKomTable('jonkoping','VACATION_HOME',this)">Fritidshus</button></div>
+    <div class="kom-table-wrap">
+      <table class="kom-table" id="komTable_jonkoping">
+        <thead>
+          <tr>
+            <th style="cursor:pointer" onclick="sortKomTable('jonkoping','display')">Kommun ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('jonkoping','p2020')">Snitt 2020 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('jonkoping','p2025')">Snitt 2025 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('jonkoping','growth')">Tillväxt ⇅</th>
+          </tr>
+        </thead>
+        <tbody id="komTbody_jonkoping"></tbody>
+      </table>
+    </div>
+    <script>
+    (function(){
+      const KOM_DATA_JONKOPING = {"ALL": [{"display": "Sävsjö", "p2020": 1344699, "p2025": 2237007, "growth": 66.4}, {"display": "Värnamo", "p2020": 1681919, "p2025": 2254183, "growth": 34.0}, {"display": "Eksjö", "p2020": 1639974, "p2025": 2147570, "growth": 31.0}, {"display": "Mullsjö", "p2020": 1731854, "p2025": 2220833, "growth": 28.2}, {"display": "Habo", "p2020": 2499322, "p2025": 3065374, "growth": 22.6}, {"display": "Vetlanda", "p2020": 1521296, "p2025": 1834172, "growth": 20.6}, {"display": "Tranås", "p2020": 1624521, "p2025": 1921235, "growth": 18.3}, {"display": "Nässjö", "p2020": 1553023, "p2025": 1832224, "growth": 18.0}, {"display": "Vaggeryds", "p2020": 1965895, "p2025": 2302026, "growth": 17.1}, {"display": "Jönköpings", "p2020": 2406437, "p2025": 2701938, "growth": 12.3}, {"display": "Gislaveds", "p2020": 1377979, "p2025": 1487519, "growth": 7.9}, {"display": "Aneby", "p2020": 1297893, "p2025": 1355471, "growth": 4.4}, {"display": "Gnosjö", "p2020": 1932249, "p2025": 1638512, "growth": -15.2}], "HOUSE": [{"display": "Tranås", "p2020": 1872508, "p2025": 2879839, "growth": 53.8}, {"display": "Mullsjö", "p2020": 1795688, "p2025": 2574597, "growth": 43.4}, {"display": "Sävsjö", "p2020": 1353621, "p2025": 1842288, "growth": 36.1}, {"display": "Aneby", "p2020": 1161449, "p2025": 1557034, "growth": 34.1}, {"display": "Gnosjö", "p2020": 1207192, "p2025": 1613454, "growth": 33.7}, {"display": "Habo", "p2020": 2888419, "p2025": 3802153, "growth": 31.6}, {"display": "Vaggeryds", "p2020": 1990822, "p2025": 2600022, "growth": 30.6}, {"display": "Nässjö", "p2020": 1606519, "p2025": 2096686, "growth": 30.5}, {"display": "Värnamo", "p2020": 2074393, "p2025": 2539167, "growth": 22.4}, {"display": "Gislaveds", "p2020": 1375483, "p2025": 1622919, "growth": 18.0}, {"display": "Vetlanda", "p2020": 1511402, "p2025": 1779869, "growth": 17.8}, {"display": "Jönköpings", "p2020": 3666235, "p2025": 4249632, "growth": 15.9}, {"display": "Eksjö", "p2020": 1822258, "p2025": 1924745, "growth": 5.6}], "APARTMENT": [{"display": "Gnosjö", "p2020": 4231, "p2025": 7463, "growth": 76.4}, {"display": "Sävsjö", "p2020": 5822, "p2025": 7718, "growth": 32.6}, {"display": "Vaggeryds", "p2020": 13022, "p2025": 15876, "growth": 21.9}, {"display": "Värnamo", "p2020": 14481, "p2025": 17632, "growth": 21.8}, {"display": "Gislaveds", "p2020": 6353, "p2025": 7674, "growth": 20.8}, {"display": "Eksjö", "p2020": 12262, "p2025": 14506, "growth": 18.3}, {"display": "Tranås", "p2020": 11748, "p2025": 13863, "growth": 18.0}, {"display": "Nässjö", "p2020": 10935, "p2025": 12394, "growth": 13.3}, {"display": "Mullsjö", "p2020": 14363, "p2025": 16248, "growth": 13.1}, {"display": "Habo", "p2020": 21304, "p2025": 23893, "growth": 12.2}, {"display": "Jönköpings", "p2020": 30480, "p2025": 30866, "growth": 1.3}, {"display": "Aneby", "p2020": 5191, "p2025": 5218, "growth": 0.5}, {"display": "Vetlanda", "p2020": 15118, "p2025": 14480, "growth": -4.2}], "VACATION_HOME": [{"display": "Habo", "p2020": 713750, "p2025": 1418750, "growth": 98.8}, {"display": "Värnamo", "p2020": 1149167, "p2025": 2091667, "growth": 82.0}, {"display": "Jönköpings", "p2020": 897985, "p2025": 1498056, "growth": 66.8}, {"display": "Nässjö", "p2020": 853306, "p2025": 1217857, "growth": 42.7}, {"display": "Vaggeryds", "p2020": 1072222, "p2025": 1415750, "growth": 32.0}, {"display": "Vetlanda", "p2020": 796667, "p2025": 818095, "growth": 2.7}, {"display": "Aneby", "p2020": null, "p2025": null, "growth": null}, {"display": "Eksjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Gislaveds", "p2020": null, "p2025": null, "growth": null}, {"display": "Gnosjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Mullsjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Sävsjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Tranås", "p2020": null, "p2025": null, "growth": null}]};
+      let currentType_jonkoping = 'ALL';
+      let sortCol_jonkoping     = 'growth';
+      let sortAsc_jonkoping     = false;
+
+      function fmtP(v) { return v ? (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2})+' Mkr' : '–'; }
+      function fmtG(v) { return v !== null ? (v>=0?'+':'')+v.toFixed(1).replace('.',',')+'%' : '–'; }
+
+      function renderKomTable_jonkoping() {
+        const rows = [...KOM_DATA_JONKOPING[currentType_jonkoping]];
+        rows.sort((a,b) => {
+          const av = a[sortCol_jonkoping], bv = b[sortCol_jonkoping];
+          if (av === null && bv === null) return 0;
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          if (typeof av === 'string') return sortAsc_jonkoping ? av.localeCompare(bv,'sv') : bv.localeCompare(av,'sv');
+          return sortAsc_jonkoping ? av - bv : bv - av;
+        });
+        const tbody = document.getElementById('komTbody_jonkoping');
+        tbody.innerHTML = rows.map((r,i) => {
+          const rankCls = (i<3 && r.growth!==null) ? 'top' : '';
+          const gCls = r.growth===null ? '' : r.growth>=0 ? 'positive' : 'negative';
+          const rank = r.growth!==null ? `<span class="kom-rank ${rankCls}">${i+1}</span>` : '<span class="kom-rank" style="opacity:.3">–</span>';
+          return `<tr>
+            <td>${rank}${r.display}</td>
+            <td>${fmtP(r.p2020)}</td>
+            <td>${fmtP(r.p2025)}</td>
+            <td class="kom-growth ${gCls}">${fmtG(r.growth)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      window.switchKomTable = function(lan, type, btn) {
+        if (lan !== 'jonkoping') return;
+        currentType_jonkoping = type;
+        btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderKomTable_jonkoping();
+      };
+      window.sortKomTable = function(lan, col) {
+        if (lan !== 'jonkoping') return;
+        if (sortCol_jonkoping === col) sortAsc_jonkoping = !sortAsc_jonkoping;
+        else { sortCol_jonkoping = col; sortAsc_jonkoping = col === 'display'; }
+        renderKomTable_jonkoping();
+      };
+
+      renderKomTable_jonkoping();
+    })();
+    </script>
+
+  <!-- Kommuner ranking table — by rooms -->
+  <h2 class="section-title">Prisutveckling per antal rum i Jönköpings Län</h2>
+  
+    <div class="type-filter"><button class="type-btn active" onclick="switchRoomTable('jonkoping','ALL',this)">Alla storlekar</button><button class="type-btn" onclick="switchRoomTable('jonkoping','ROOM_1',this)">1 rum</button><button class="type-btn" onclick="switchRoomTable('jonkoping','ROOM_2',this)">2 rum</button><button class="type-btn" onclick="switchRoomTable('jonkoping','ROOM_3',this)">3 rum</button><button class="type-btn" onclick="switchRoomTable('jonkoping','ROOM_4',this)">4 rum</button><button class="type-btn" onclick="switchRoomTable('jonkoping','ROOM_5',this)">5+ rum</button></div>
+    <div class="kom-table-wrap">
+      <table class="kom-table" id="roomTable_jonkoping">
+        <thead>
+          <tr>
+            <th style="cursor:pointer" onclick="sortRoomTable('jonkoping','display')">Kommun ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('jonkoping','p2020')">Snitt 2020 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('jonkoping','p2025')">Snitt 2025 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('jonkoping','growth')">Tillväxt ⇅</th>
+          </tr>
+        </thead>
+        <tbody id="roomTbody_jonkoping"></tbody>
+      </table>
+    </div>
+    <script>
+    (function(){
+      const ROOM_DATA_JONKOPING = {"ALL": [{"display": "Sävsjö", "p2020": 1344699, "p2025": 2237007, "growth": 66.4}, {"display": "Värnamo", "p2020": 1681919, "p2025": 2254183, "growth": 34.0}, {"display": "Eksjö", "p2020": 1639974, "p2025": 2147570, "growth": 31.0}, {"display": "Mullsjö", "p2020": 1731854, "p2025": 2220833, "growth": 28.2}, {"display": "Habo", "p2020": 2499322, "p2025": 3065374, "growth": 22.6}, {"display": "Vetlanda", "p2020": 1521296, "p2025": 1834172, "growth": 20.6}, {"display": "Tranås", "p2020": 1624521, "p2025": 1921235, "growth": 18.3}, {"display": "Nässjö", "p2020": 1553023, "p2025": 1832224, "growth": 18.0}, {"display": "Vaggeryds", "p2020": 1965895, "p2025": 2302026, "growth": 17.1}, {"display": "Jönköpings", "p2020": 2406437, "p2025": 2701938, "growth": 12.3}, {"display": "Gislaveds", "p2020": 1377979, "p2025": 1487519, "growth": 7.9}, {"display": "Aneby", "p2020": 1297893, "p2025": 1355471, "growth": 4.4}, {"display": "Gnosjö", "p2020": 1932249, "p2025": 1638512, "growth": -15.2}], "ROOM_1": [{"display": "Gislaveds", "p2020": 298056, "p2025": 427292, "growth": 43.4}, {"display": "Värnamo", "p2020": 536396, "p2025": 686425, "growth": 28.0}, {"display": "Tranås", "p2020": 361250, "p2025": 450000, "growth": 24.6}, {"display": "Nässjö", "p2020": 462604, "p2025": 539688, "growth": 16.7}, {"display": "Aneby", "p2020": 233833, "p2025": 245833, "growth": 5.1}, {"display": "Jönköpings", "p2020": 1361393, "p2025": 1422826, "growth": 4.5}, {"display": "Vetlanda", "p2020": 615357, "p2025": 366500, "growth": -40.4}, {"display": "Eksjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Gnosjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Habo", "p2020": null, "p2025": null, "growth": null}, {"display": "Mullsjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Sävsjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Vaggeryds", "p2020": null, "p2025": null, "growth": null}], "ROOM_2": [{"display": "Sävsjö", "p2020": 358500, "p2025": 1496000, "growth": 317.3}, {"display": "Aneby", "p2020": 335714, "p2025": 821667, "growth": 144.8}, {"display": "Tranås", "p2020": 763929, "p2025": 1151283, "growth": 50.7}, {"display": "Vaggeryds", "p2020": 776875, "p2025": 1143594, "growth": 47.2}, {"display": "Värnamo", "p2020": 881936, "p2025": 1220112, "growth": 38.3}, {"display": "Nässjö", "p2020": 744464, "p2025": 936076, "growth": 25.7}, {"display": "Gislaveds", "p2020": 433657, "p2025": 532689, "growth": 22.8}, {"display": "Vetlanda", "p2020": 731985, "p2025": 738958, "growth": 1.0}, {"display": "Habo", "p2020": 1324722, "p2025": 1326389, "growth": 0.1}, {"display": "Jönköpings", "p2020": 1793721, "p2025": 1767937, "growth": -1.4}, {"display": "Eksjö", "p2020": 836667, "p2025": 730429, "growth": -12.7}, {"display": "Gnosjö", "p2020": null, "p2025": null, "growth": null}, {"display": "Mullsjö", "p2020": null, "p2025": null, "growth": null}], "ROOM_3": [{"display": "Sävsjö", "p2020": 480104, "p2025": 1290000, "growth": 168.7}, {"display": "Habo", "p2020": 1294167, "p2025": 2065952, "growth": 59.6}, {"display": "Eksjö", "p2020": 1054817, "p2025": 1553333, "growth": 47.3}, {"display": "Nässjö", "p2020": 876437, "p2025": 1161071, "growth": 32.5}, {"display": "Värnamo", "p2020": 1088033, "p2025": 1429175, "growth": 31.4}, {"display": "Tranås", "p2020": 1097454, "p2025": 1404583, "growth": 28.0}, {"display": "Vetlanda", "p2020": 1062638, "p2025": 1233263, "growth": 16.1}, {"display": "Aneby", "p2020": 630083, "p2025": 665667, "growth": 5.6}, {"display": "Vaggeryds", "p2020": 1373561, "p2025": 1447181, "growth": 5.4}, {"display": "Jönköpings", "p2020": 2088421, "p2025": 2185767, "growth": 4.7}, {"display": "Mullsjö", "p2020": 1373333, "p2025": 1386500, "growth": 1.0}, {"display": "Gislaveds", "p2020": 795636, "p2025": 735190, "growth": -7.6}, {"display": "Gnosjö", "p2020": 750667, "p2025": 684000, "growth": -8.9}], "ROOM_4": [{"display": "Gnosjö", "p2020": 646071, "p2025": 1061481, "growth": 64.3}, {"display": "Sävsjö", "p2020": 1192037, "p2025": 1905076, "growth": 59.8}, {"display": "Gislaveds", "p2020": 922417, "p2025": 1340958, "growth": 45.4}, {"display": "Eksjö", "p2020": 1043715, "p2025": 1437926, "growth": 37.8}, {"display": "Mullsjö", "p2020": 1289444, "p2025": 1716000, "growth": 33.1}, {"display": "Värnamo", "p2020": 1661831, "p2025": 2140588, "growth": 28.8}, {"display": "Vetlanda", "p2020": 1304004, "p2025": 1651366, "growth": 26.6}, {"display": "Tranås", "p2020": 1608167, "p2025": 1963287, "growth": 22.1}, {"display": "Vaggeryds", "p2020": 1900924, "p2025": 2225556, "growth": 17.1}, {"display": "Nässjö", "p2020": 1416174, "p2025": 1590343, "growth": 12.3}, {"display": "Jönköpings", "p2020": 2681118, "p2025": 3006302, "growth": 12.1}, {"display": "Habo", "p2020": 2266576, "p2025": 2329424, "growth": 2.8}, {"display": "Aneby", "p2020": 1005208, "p2025": 915119, "growth": -9.0}], "ROOM_5": [{"display": "Aneby", "p2020": 1090521, "p2025": 2387857, "growth": 119.0}, {"display": "Vaggeryds", "p2020": 1733894, "p2025": 2579778, "growth": 48.8}, {"display": "Mullsjö", "p2020": 1823958, "p2025": 2511917, "growth": 37.7}, {"display": "Vetlanda", "p2020": 1407033, "p2025": 1872772, "growth": 33.1}, {"display": "Gnosjö", "p2020": 1149083, "p2025": 1519917, "growth": 32.3}, {"display": "Habo", "p2020": 2831451, "p2025": 3601667, "growth": 27.2}, {"display": "Sävsjö", "p2020": 1221018, "p2025": 1533518, "growth": 25.6}, {"display": "Eksjö", "p2020": 1810278, "p2025": 2262024, "growth": 25.0}, {"display": "Värnamo", "p2020": 1968117, "p2025": 2406794, "growth": 22.3}, {"display": "Nässjö", "p2020": 1682232, "p2025": 2012902, "growth": 19.7}, {"display": "Gislaveds", "p2020": 1220917, "p2025": 1431699, "growth": 17.3}, {"display": "Tranås", "p2020": 1763083, "p2025": 2033333, "growth": 15.3}, {"display": "Jönköpings", "p2020": 3317318, "p2025": 3507103, "growth": 5.7}]};
+      let currentRoom_room_jonkoping = 'ALL';
+      let sortCol_room_jonkoping     = 'growth';
+      let sortAsc_room_jonkoping     = false;
+
+      function fmtP(v) { return v ? (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2})+' Mkr' : '–'; }
+      function fmtG(v) { return v !== null ? (v>=0?'+':'')+v.toFixed(1).replace('.',',')+' %' : '–'; }
+
+      function renderRoomTable_room_jonkoping() {
+        const rows = [...ROOM_DATA_JONKOPING[currentRoom_room_jonkoping]];
+        rows.sort((a,b) => {
+          const av = a[sortCol_room_jonkoping], bv = b[sortCol_room_jonkoping];
+          if (av === null && bv === null) return 0;
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          if (typeof av === 'string') return sortAsc_room_jonkoping ? av.localeCompare(bv,'sv') : bv.localeCompare(av,'sv');
+          return sortAsc_room_jonkoping ? av - bv : bv - av;
+        });
+        const tbody = document.getElementById('roomTbody_jonkoping');
+        tbody.innerHTML = rows.map((r,i) => {
+          const rankCls = (i<3 && r.growth!==null) ? 'top' : '';
+          const gCls = r.growth===null ? '' : r.growth>=0 ? 'positive' : 'negative';
+          const rank = r.growth!==null
+            ? `<span class="kom-rank ${rankCls}">${i+1}</span>`
+            : '<span class="kom-rank" style="opacity:.3">–</span>';
+          return `<tr>
+            <td>${rank}${r.display}</td>
+            <td>${fmtP(r.p2020)}</td>
+            <td>${fmtP(r.p2025)}</td>
+            <td class="kom-growth ${gCls}">${fmtG(r.growth)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      window.switchRoomTable = function(lan, room, btn) {
+        if (lan !== 'jonkoping') return;
+        currentRoom_room_jonkoping = room;
+        btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderRoomTable_room_jonkoping();
+      };
+      window.sortRoomTable = function(lan, col) {
+        if (lan !== 'jonkoping') return;
+        if (sortCol_room_jonkoping === col) sortAsc_room_jonkoping = !sortAsc_room_jonkoping;
+        else { sortCol_room_jonkoping = col; sortAsc_room_jonkoping = col === 'display'; }
+        renderRoomTable_room_jonkoping();
+      };
+
+      renderRoomTable_room_jonkoping();
+    })();
+    </script>
+
+
+</div>
+
+<script>
+(function() {
+  const priceLabels  = ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+  const priceValues  = [1780460, 2063966, 1800185, 2174264, 2149480, 2095772, 1755464, 1938817, 2031286, 2048629, 1977590, 1980893, 1884897, 1973903, 2152516, 2068302, 2268150, 2166388, 1931816, 2040627, 2217510, 2310857, 2174087, 1957600, 2195245, 2172489, 2244677, 2313737, 2498353, 2428428, 2040960, 2503969, 2571595, 2093699, 2200825, 2122985, 2105989, 2058167, 2316774, 2304218, 2525048, 2274470, 2059113, 2324093, 2513199, 2469431, 2166642, 2354297, 2133586, 2135346, 2150667, 2309829, 2243406, 2071258, 2188873, 2429325, 2130609, 2322528, 2157470, 2332019, 2325552, 2195616, 2439923, 2212399, 2368773, 2053948, 1916550, 2540551, 2262469, 2457586, 2185539, 2173848, 2026789, 2101598, 2329769, 2192427, 2372992];
+  const supplyLabels = ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+  const supplyValues = [780, 854, 877, 989, 1102, 1049, 785, 949, 996, 944, 834, 610, 661, 727, 823, 945, 1089, 1124, 877, 1032, 1170, 1091, 922, 666, 693, 819, 918, 972, 1214, 1253, 1018, 1246, 1363, 1344, 1301, 1082, 1101, 1151, 1216, 1290, 1520, 1578, 1395, 1608, 1733, 1707, 1571, 1422, 1440, 1528, 1636, 1667, 1961, 1937, 1819, 2001, 2150, 2142, 1990, 1727, 1733, 1774, 1900, 2029, 2218, 2143, 1912, 2023, 2064, 2013, 1835, 1581, 1576, 1524, 1528, 1657, 1778];
+
+  function fmtPrice(v) {
+    return (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Mkr';
+  }
+  function fmtCount(v) {
+    return v.toLocaleString('sv-SE') + ' annonser';
+  }
+  function showYearTick(label) {
+    return label && label.endsWith('-01');
+  }
+  function yearLabel(label) {
+    return label ? label.substring(0,4) : '';
+  }
+
+  const gridColor  = 'rgba(1,58,20,.07)';
+  const labelColor = '#5a6a5e';
+  const baseFont   = { family: 'Roboto', size: 11 };
+
+  // ── Price chart ──────────────────────────────────────────────────────────
+  const priceCtx = document.getElementById('priceChart').getContext('2d');
+  const priceGrad = priceCtx.createLinearGradient(0, 0, 0, 260);
+  priceGrad.addColorStop(0, 'rgba(0,126,71,.25)');
+  priceGrad.addColorStop(1, 'rgba(0,126,71,.0)');
+
+  const priceChart = new Chart(priceCtx, {
+    type: 'line',
+    data: {
+      labels: priceLabels,
+      datasets: [{
+        data: priceValues,
+        borderColor: '#007e47',
+        backgroundColor: priceGrad,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#007e47',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#013a14',
+          titleFont: { ...baseFont, size: 12, weight: '700' },
+          bodyFont: baseFont,
+          padding: 12,
+          callbacks: {
+            title: ctx => { const l = ctx[0].label; return l ? l.substring(0,4) + ' ' + new Date(l+'-01').toLocaleString('sv-SE',{month:'short'}) : ''; },
+            label: ctx => ' ' + fmtPrice(ctx.raw),
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: function(val, idx) {
+              return showYearTick(priceLabels[idx]) ? yearLabel(priceLabels[idx]) : '';
+            },
+            maxRotation: 0,
+          },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: v => (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' Mkr',
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+
+  // ── Supply chart ─────────────────────────────────────────────────────────
+  const supplyCtx = document.getElementById('supplyChart').getContext('2d');
+  const supplyGrad = supplyCtx.createLinearGradient(0, 0, 0, 260);
+  supplyGrad.addColorStop(0, 'rgba(1,58,20,.20)');
+  supplyGrad.addColorStop(1, 'rgba(1,58,20,.0)');
+
+  const supplyChart = new Chart(supplyCtx, {
+    type: 'line',
+    data: {
+      labels: supplyLabels,
+      datasets: [{
+        data: supplyValues,
+        borderColor: '#013a14',
+        backgroundColor: supplyGrad,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#013a14',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#013a14',
+          titleFont: { ...baseFont, size: 12, weight: '700' },
+          bodyFont: baseFont,
+          padding: 12,
+          callbacks: {
+            title: ctx => { const l = ctx[0].label; return l ? l.substring(0,4) + ' ' + new Date(l+'-01').toLocaleString('sv-SE',{month:'short'}) : ''; },
+            label: ctx => ' ' + fmtCount(ctx.raw),
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: function(val, idx) {
+              return showYearTick(supplyLabels[idx]) ? yearLabel(supplyLabels[idx]) : '';
+            },
+            maxRotation: 0,
+          },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: v => v.toLocaleString('sv-SE'),
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+
+  // ── Type switching ───────────────────────────────────────────────────────
+  const typeData = {"ALL": {"price": [{"x": "2020-01", "y": 1780460}, {"x": "2020-02", "y": 2063966}, {"x": "2020-03", "y": 1800185}, {"x": "2020-04", "y": 2174264}, {"x": "2020-05", "y": 2149480}, {"x": "2020-06", "y": 2095772}, {"x": "2020-07", "y": 1755464}, {"x": "2020-08", "y": 1938817}, {"x": "2020-09", "y": 2031286}, {"x": "2020-10", "y": 2048629}, {"x": "2020-11", "y": 1977590}, {"x": "2020-12", "y": 1980893}, {"x": "2021-01", "y": 1884897}, {"x": "2021-02", "y": 1973903}, {"x": "2021-03", "y": 2152516}, {"x": "2021-04", "y": 2068302}, {"x": "2021-05", "y": 2268150}, {"x": "2021-06", "y": 2166388}, {"x": "2021-07", "y": 1931816}, {"x": "2021-08", "y": 2040627}, {"x": "2021-09", "y": 2217510}, {"x": "2021-10", "y": 2310857}, {"x": "2021-11", "y": 2174087}, {"x": "2021-12", "y": 1957600}, {"x": "2022-01", "y": 2195245}, {"x": "2022-02", "y": 2172489}, {"x": "2022-03", "y": 2244677}, {"x": "2022-04", "y": 2313737}, {"x": "2022-05", "y": 2498353}, {"x": "2022-06", "y": 2428428}, {"x": "2022-07", "y": 2040960}, {"x": "2022-08", "y": 2503969}, {"x": "2022-09", "y": 2571595}, {"x": "2022-10", "y": 2093699}, {"x": "2022-11", "y": 2200825}, {"x": "2022-12", "y": 2122985}, {"x": "2023-01", "y": 2105989}, {"x": "2023-02", "y": 2058167}, {"x": "2023-03", "y": 2316774}, {"x": "2023-04", "y": 2304218}, {"x": "2023-05", "y": 2525048}, {"x": "2023-06", "y": 2274470}, {"x": "2023-07", "y": 2059113}, {"x": "2023-08", "y": 2324093}, {"x": "2023-09", "y": 2513199}, {"x": "2023-10", "y": 2469431}, {"x": "2023-11", "y": 2166642}, {"x": "2023-12", "y": 2354297}, {"x": "2024-01", "y": 2133586}, {"x": "2024-02", "y": 2135346}, {"x": "2024-03", "y": 2150667}, {"x": "2024-04", "y": 2309829}, {"x": "2024-05", "y": 2243406}, {"x": "2024-06", "y": 2071258}, {"x": "2024-07", "y": 2188873}, {"x": "2024-08", "y": 2429325}, {"x": "2024-09", "y": 2130609}, {"x": "2024-10", "y": 2322528}, {"x": "2024-11", "y": 2157470}, {"x": "2024-12", "y": 2332019}, {"x": "2025-01", "y": 2325552}, {"x": "2025-02", "y": 2195616}, {"x": "2025-03", "y": 2439923}, {"x": "2025-04", "y": 2212399}, {"x": "2025-05", "y": 2368773}, {"x": "2025-06", "y": 2053948}, {"x": "2025-07", "y": 1916550}, {"x": "2025-08", "y": 2540551}, {"x": "2025-09", "y": 2262469}, {"x": "2025-10", "y": 2457586}, {"x": "2025-11", "y": 2185539}, {"x": "2025-12", "y": 2173848}, {"x": "2026-01", "y": 2026789}, {"x": "2026-02", "y": 2101598}, {"x": "2026-03", "y": 2329769}, {"x": "2026-04", "y": 2192427}, {"x": "2026-05", "y": 2372992}], "supply": [{"x": "2020-01", "y": 780}, {"x": "2020-02", "y": 854}, {"x": "2020-03", "y": 877}, {"x": "2020-04", "y": 989}, {"x": "2020-05", "y": 1102}, {"x": "2020-06", "y": 1049}, {"x": "2020-07", "y": 785}, {"x": "2020-08", "y": 949}, {"x": "2020-09", "y": 996}, {"x": "2020-10", "y": 944}, {"x": "2020-11", "y": 834}, {"x": "2020-12", "y": 610}, {"x": "2021-01", "y": 661}, {"x": "2021-02", "y": 727}, {"x": "2021-03", "y": 823}, {"x": "2021-04", "y": 945}, {"x": "2021-05", "y": 1089}, {"x": "2021-06", "y": 1124}, {"x": "2021-07", "y": 877}, {"x": "2021-08", "y": 1032}, {"x": "2021-09", "y": 1170}, {"x": "2021-10", "y": 1091}, {"x": "2021-11", "y": 922}, {"x": "2021-12", "y": 666}, {"x": "2022-01", "y": 693}, {"x": "2022-02", "y": 819}, {"x": "2022-03", "y": 918}, {"x": "2022-04", "y": 972}, {"x": "2022-05", "y": 1214}, {"x": "2022-06", "y": 1253}, {"x": "2022-07", "y": 1018}, {"x": "2022-08", "y": 1246}, {"x": "2022-09", "y": 1363}, {"x": "2022-10", "y": 1344}, {"x": "2022-11", "y": 1301}, {"x": "2022-12", "y": 1082}, {"x": "2023-01", "y": 1101}, {"x": "2023-02", "y": 1151}, {"x": "2023-03", "y": 1216}, {"x": "2023-04", "y": 1290}, {"x": "2023-05", "y": 1520}, {"x": "2023-06", "y": 1578}, {"x": "2023-07", "y": 1395}, {"x": "2023-08", "y": 1608}, {"x": "2023-09", "y": 1733}, {"x": "2023-10", "y": 1707}, {"x": "2023-11", "y": 1571}, {"x": "2023-12", "y": 1422}, {"x": "2024-01", "y": 1440}, {"x": "2024-02", "y": 1528}, {"x": "2024-03", "y": 1636}, {"x": "2024-04", "y": 1667}, {"x": "2024-05", "y": 1961}, {"x": "2024-06", "y": 1937}, {"x": "2024-07", "y": 1819}, {"x": "2024-08", "y": 2001}, {"x": "2024-09", "y": 2150}, {"x": "2024-10", "y": 2142}, {"x": "2024-11", "y": 1990}, {"x": "2024-12", "y": 1727}, {"x": "2025-01", "y": 1733}, {"x": "2025-02", "y": 1774}, {"x": "2025-03", "y": 1900}, {"x": "2025-04", "y": 2029}, {"x": "2025-05", "y": 2218}, {"x": "2025-06", "y": 2143}, {"x": "2025-07", "y": 1912}, {"x": "2025-08", "y": 2023}, {"x": "2025-09", "y": 2064}, {"x": "2025-10", "y": 2013}, {"x": "2025-11", "y": 1835}, {"x": "2025-12", "y": 1581}, {"x": "2026-01", "y": 1576}, {"x": "2026-02", "y": 1524}, {"x": "2026-03", "y": 1528}, {"x": "2026-04", "y": 1657}, {"x": "2026-05", "y": 1778}]}, "HOUSE": {"price": [{"x": "2020-01", "y": 2163211}, {"x": "2020-02", "y": 2177685}, {"x": "2020-03", "y": 2081373}, {"x": "2020-04", "y": 2222593}, {"x": "2020-05", "y": 2515450}, {"x": "2020-06", "y": 2416965}, {"x": "2020-07", "y": 1899938}, {"x": "2020-08", "y": 2126361}, {"x": "2020-09", "y": 2144297}, {"x": "2020-10", "y": 2305650}, {"x": "2020-11", "y": 2180474}, {"x": "2020-12", "y": 2346550}, {"x": "2021-01", "y": 2526589}, {"x": "2021-02", "y": 2321637}, {"x": "2021-03", "y": 2349190}, {"x": "2021-04", "y": 2390634}, {"x": "2021-05", "y": 2522160}, {"x": "2021-06", "y": 2454156}, {"x": "2021-07", "y": 2402458}, {"x": "2021-08", "y": 2265545}, {"x": "2021-09", "y": 2519299}, {"x": "2021-10", "y": 2657573}, {"x": "2021-11", "y": 2584464}, {"x": "2021-12", "y": 2308476}, {"x": "2022-01", "y": 2438795}, {"x": "2022-02", "y": 2474927}, {"x": "2022-03", "y": 2652401}, {"x": "2022-04", "y": 2560171}, {"x": "2022-05", "y": 2755779}, {"x": "2022-06", "y": 2719723}, {"x": "2022-07", "y": 2401667}, {"x": "2022-08", "y": 2614326}, {"x": "2022-09", "y": 2691996}, {"x": "2022-10", "y": 2361168}, {"x": "2022-11", "y": 2430925}, {"x": "2022-12", "y": 2246000}, {"x": "2023-01", "y": 2484320}, {"x": "2023-02", "y": 2382480}, {"x": "2023-03", "y": 2719597}, {"x": "2023-04", "y": 2596340}, {"x": "2023-05", "y": 2807744}, {"x": "2023-06", "y": 2535000}, {"x": "2023-07", "y": 2294057}, {"x": "2023-08", "y": 2449045}, {"x": "2023-09", "y": 2543495}, {"x": "2023-10", "y": 2578876}, {"x": "2023-11", "y": 2479250}, {"x": "2023-12", "y": 2888841}, {"x": "2024-01", "y": 2371767}, {"x": "2024-02", "y": 2469428}, {"x": "2024-03", "y": 2399310}, {"x": "2024-04", "y": 2621329}, {"x": "2024-05", "y": 2595798}, {"x": "2024-06", "y": 2462670}, {"x": "2024-07", "y": 2533780}, {"x": "2024-08", "y": 2711327}, {"x": "2024-09", "y": 2502217}, {"x": "2024-10", "y": 2600610}, {"x": "2024-11", "y": 2378434}, {"x": "2024-12", "y": 2766129}, {"x": "2025-01", "y": 2729079}, {"x": "2025-02", "y": 2368657}, {"x": "2025-03", "y": 2585756}, {"x": "2025-04", "y": 2500753}, {"x": "2025-05", "y": 2583554}, {"x": "2025-06", "y": 2383176}, {"x": "2025-07", "y": 2449437}, {"x": "2025-08", "y": 2823257}, {"x": "2025-09", "y": 2550169}, {"x": "2025-10", "y": 2720834}, {"x": "2025-11", "y": 2476211}, {"x": "2025-12", "y": 2706429}, {"x": "2026-01", "y": 2545298}, {"x": "2026-02", "y": 2711250}, {"x": "2026-03", "y": 2534995}, {"x": "2026-04", "y": 2383399}, {"x": "2026-05", "y": 2918406}], "supply": [{"x": "2020-01", "y": 301}, {"x": "2020-02", "y": 347}, {"x": "2020-03", "y": 345}, {"x": "2020-04", "y": 410}, {"x": "2020-05", "y": 447}, {"x": "2020-06", "y": 431}, {"x": "2020-07", "y": 286}, {"x": "2020-08", "y": 366}, {"x": "2020-09", "y": 413}, {"x": "2020-10", "y": 404}, {"x": "2020-11", "y": 336}, {"x": "2020-12", "y": 242}, {"x": "2021-01", "y": 233}, {"x": "2021-02", "y": 286}, {"x": "2021-03", "y": 346}, {"x": "2021-04", "y": 395}, {"x": "2021-05", "y": 456}, {"x": "2021-06", "y": 497}, {"x": "2021-07", "y": 347}, {"x": "2021-08", "y": 394}, {"x": "2021-09", "y": 466}, {"x": "2021-10", "y": 462}, {"x": "2021-11", "y": 389}, {"x": "2021-12", "y": 270}, {"x": "2022-01", "y": 263}, {"x": "2022-02", "y": 320}, {"x": "2022-03", "y": 385}, {"x": "2022-04", "y": 430}, {"x": "2022-05", "y": 562}, {"x": "2022-06", "y": 575}, {"x": "2022-07", "y": 413}, {"x": "2022-08", "y": 522}, {"x": "2022-09", "y": 611}, {"x": "2022-10", "y": 600}, {"x": "2022-11", "y": 572}, {"x": "2022-12", "y": 473}, {"x": "2023-01", "y": 472}, {"x": "2023-02", "y": 490}, {"x": "2023-03", "y": 504}, {"x": "2023-04", "y": 550}, {"x": "2023-05", "y": 674}, {"x": "2023-06", "y": 729}, {"x": "2023-07", "y": 592}, {"x": "2023-08", "y": 692}, {"x": "2023-09", "y": 757}, {"x": "2023-10", "y": 737}, {"x": "2023-11", "y": 685}, {"x": "2023-12", "y": 612}, {"x": "2024-01", "y": 614}, {"x": "2024-02", "y": 669}, {"x": "2024-03", "y": 703}, {"x": "2024-04", "y": 714}, {"x": "2024-05", "y": 861}, {"x": "2024-06", "y": 881}, {"x": "2024-07", "y": 805}, {"x": "2024-08", "y": 882}, {"x": "2024-09", "y": 955}, {"x": "2024-10", "y": 963}, {"x": "2024-11", "y": 896}, {"x": "2024-12", "y": 755}, {"x": "2025-01", "y": 739}, {"x": "2025-02", "y": 747}, {"x": "2025-03", "y": 806}, {"x": "2025-04", "y": 862}, {"x": "2025-05", "y": 960}, {"x": "2025-06", "y": 936}, {"x": "2025-07", "y": 821}, {"x": "2025-08", "y": 870}, {"x": "2025-09", "y": 902}, {"x": "2025-10", "y": 902}, {"x": "2025-11", "y": 808}, {"x": "2025-12", "y": 693}, {"x": "2026-01", "y": 662}, {"x": "2026-02", "y": 641}, {"x": "2026-03", "y": 643}, {"x": "2026-04", "y": 689}, {"x": "2026-05", "y": 731}]}, "APARTMENT": {"price": [{"x": "2020-01", "y": 23058}, {"x": "2020-02", "y": 22258}, {"x": "2020-03", "y": 24502}, {"x": "2020-04", "y": 22403}, {"x": "2020-05", "y": 24745}, {"x": "2020-06", "y": 24192}, {"x": "2020-07", "y": 27348}, {"x": "2020-08", "y": 25675}, {"x": "2020-09", "y": 24393}, {"x": "2020-10", "y": 23453}, {"x": "2020-11", "y": 23113}, {"x": "2020-12", "y": 24544}, {"x": "2021-01", "y": 23056}, {"x": "2021-02", "y": 22181}, {"x": "2021-03", "y": 24511}, {"x": "2021-04", "y": 24709}, {"x": "2021-05", "y": 26704}, {"x": "2021-06", "y": 26099}, {"x": "2021-07", "y": 30287}, {"x": "2021-08", "y": 25716}, {"x": "2021-09", "y": 25277}, {"x": "2021-10", "y": 25932}, {"x": "2021-11", "y": 25266}, {"x": "2021-12", "y": 22549}, {"x": "2022-01", "y": 27098}, {"x": "2022-02", "y": 23916}, {"x": "2022-03", "y": 25367}, {"x": "2022-04", "y": 26619}, {"x": "2022-05", "y": 28852}, {"x": "2022-06", "y": 27305}, {"x": "2022-07", "y": 33038}, {"x": "2022-08", "y": 27651}, {"x": "2022-09", "y": 26278}, {"x": "2022-10", "y": 25294}, {"x": "2022-11", "y": 24391}, {"x": "2022-12", "y": 26711}, {"x": "2023-01", "y": 24416}, {"x": "2023-02", "y": 25075}, {"x": "2023-03", "y": 24494}, {"x": "2023-04", "y": 25696}, {"x": "2023-05", "y": 27663}, {"x": "2023-06", "y": 26044}, {"x": "2023-07", "y": 28631}, {"x": "2023-08", "y": 26780}, {"x": "2023-09", "y": 24505}, {"x": "2023-10", "y": 26392}, {"x": "2023-11", "y": 23605}, {"x": "2023-12", "y": 23887}, {"x": "2024-01", "y": 24720}, {"x": "2024-02", "y": 22619}, {"x": "2024-03", "y": 25159}, {"x": "2024-04", "y": 24120}, {"x": "2024-05", "y": 23703}, {"x": "2024-06", "y": 23942}, {"x": "2024-07", "y": 28011}, {"x": "2024-08", "y": 24740}, {"x": "2024-09", "y": 22302}, {"x": "2024-10", "y": 24177}, {"x": "2024-11", "y": 25475}, {"x": "2024-12", "y": 23100}, {"x": "2025-01", "y": 25535}, {"x": "2025-02", "y": 24723}, {"x": "2025-03", "y": 25036}, {"x": "2025-04", "y": 23806}, {"x": "2025-05", "y": 27250}, {"x": "2025-06", "y": 23752}, {"x": "2025-07", "y": 27245}, {"x": "2025-08", "y": 24754}, {"x": "2025-09", "y": 22352}, {"x": "2025-10", "y": 24269}, {"x": "2025-11", "y": 22946}, {"x": "2025-12", "y": 22866}, {"x": "2026-01", "y": 24851}, {"x": "2026-02", "y": 23072}, {"x": "2026-03", "y": 22822}, {"x": "2026-04", "y": 26428}, {"x": "2026-05", "y": 26442}], "supply": [{"x": "2020-01", "y": 351}, {"x": "2020-02", "y": 376}, {"x": "2020-03", "y": 386}, {"x": "2020-04", "y": 384}, {"x": "2020-05", "y": 434}, {"x": "2020-06", "y": 397}, {"x": "2020-07", "y": 333}, {"x": "2020-08", "y": 389}, {"x": "2020-09", "y": 385}, {"x": "2020-10", "y": 362}, {"x": "2020-11", "y": 345}, {"x": "2020-12", "y": 251}, {"x": "2021-01", "y": 316}, {"x": "2021-02", "y": 329}, {"x": "2021-03", "y": 353}, {"x": "2021-04", "y": 398}, {"x": "2021-05", "y": 433}, {"x": "2021-06", "y": 422}, {"x": "2021-07", "y": 361}, {"x": "2021-08", "y": 431}, {"x": "2021-09", "y": 484}, {"x": "2021-10", "y": 444}, {"x": "2021-11", "y": 377}, {"x": "2021-12", "y": 274}, {"x": "2022-01", "y": 304}, {"x": "2022-02", "y": 350}, {"x": "2022-03", "y": 376}, {"x": "2022-04", "y": 366}, {"x": "2022-05", "y": 408}, {"x": "2022-06", "y": 432}, {"x": "2022-07", "y": 429}, {"x": "2022-08", "y": 514}, {"x": "2022-09", "y": 509}, {"x": "2022-10", "y": 490}, {"x": "2022-11", "y": 482}, {"x": "2022-12", "y": 397}, {"x": "2023-01", "y": 424}, {"x": "2023-02", "y": 450}, {"x": "2023-03", "y": 478}, {"x": "2023-04", "y": 491}, {"x": "2023-05", "y": 542}, {"x": "2023-06", "y": 553}, {"x": "2023-07", "y": 544}, {"x": "2023-08", "y": 626}, {"x": "2023-09", "y": 659}, {"x": "2023-10", "y": 652}, {"x": "2023-11", "y": 585}, {"x": "2023-12", "y": 533}, {"x": "2024-01", "y": 559}, {"x": "2024-02", "y": 602}, {"x": "2024-03", "y": 642}, {"x": "2024-04", "y": 631}, {"x": "2024-05", "y": 720}, {"x": "2024-06", "y": 693}, {"x": "2024-07", "y": 671}, {"x": "2024-08", "y": 743}, {"x": "2024-09", "y": 810}, {"x": "2024-10", "y": 797}, {"x": "2024-11", "y": 741}, {"x": "2024-12", "y": 653}, {"x": "2025-01", "y": 691}, {"x": "2025-02", "y": 708}, {"x": "2025-03", "y": 753}, {"x": "2025-04", "y": 793}, {"x": "2025-05", "y": 838}, {"x": "2025-06", "y": 805}, {"x": "2025-07", "y": 736}, {"x": "2025-08", "y": 791}, {"x": "2025-09", "y": 793}, {"x": "2025-10", "y": 771}, {"x": "2025-11", "y": 717}, {"x": "2025-12", "y": 623}, {"x": "2026-01", "y": 670}, {"x": "2026-02", "y": 646}, {"x": "2026-03", "y": 626}, {"x": "2026-04", "y": 695}, {"x": "2026-05", "y": 739}]}, "VACATION_HOME": {"price": [{"x": "2020-02", "y": 981667}, {"x": "2020-03", "y": 1154000}, {"x": "2020-04", "y": 901471}, {"x": "2020-05", "y": 923182}, {"x": "2020-06", "y": 800385}, {"x": "2020-07", "y": 1011053}, {"x": "2020-08", "y": 978913}, {"x": "2020-09", "y": 873077}, {"x": "2020-10", "y": 1070417}, {"x": "2020-11", "y": 1165000}, {"x": "2020-12", "y": 750000}, {"x": "2021-01", "y": 375000}, {"x": "2021-02", "y": 1181667}, {"x": "2021-03", "y": 1021875}, {"x": "2021-04", "y": 960600}, {"x": "2021-05", "y": 920811}, {"x": "2021-06", "y": 1003125}, {"x": "2021-07", "y": 1160625}, {"x": "2021-08", "y": 1124348}, {"x": "2021-09", "y": 846667}, {"x": "2021-10", "y": 1037400}, {"x": "2021-11", "y": 550000}, {"x": "2021-12", "y": 800000}, {"x": "2022-01", "y": 960000}, {"x": "2022-02", "y": 1922500}, {"x": "2022-03", "y": 931250}, {"x": "2022-04", "y": 1287500}, {"x": "2022-05", "y": 1101212}, {"x": "2022-06", "y": 1340000}, {"x": "2022-07", "y": 1301429}, {"x": "2022-08", "y": 1049048}, {"x": "2022-09", "y": 1155833}, {"x": "2022-10", "y": 1560000}, {"x": "2022-11", "y": 2795000}, {"x": "2022-12", "y": 2195000}, {"x": "2023-01", "y": 1141250}, {"x": "2023-02", "y": 1370000}, {"x": "2023-03", "y": 1083750}, {"x": "2023-04", "y": 1035417}, {"x": "2023-05", "y": 870704}, {"x": "2023-06", "y": 1274231}, {"x": "2023-07", "y": 1009857}, {"x": "2023-08", "y": 1151667}, {"x": "2023-09", "y": 1205000}, {"x": "2023-10", "y": 1395000}, {"x": "2023-11", "y": 1225000}, {"x": "2023-12", "y": 715000}, {"x": "2024-01", "y": 1146667}, {"x": "2024-02", "y": 973333}, {"x": "2024-03", "y": 1220333}, {"x": "2024-04", "y": 1463333}, {"x": "2024-05", "y": 1355909}, {"x": "2024-06", "y": 1212750}, {"x": "2024-07", "y": 1327500}, {"x": "2024-08", "y": 1183667}, {"x": "2024-09", "y": 1193769}, {"x": "2024-10", "y": 656250}, {"x": "2024-11", "y": 1490000}, {"x": "2024-12", "y": 995000}, {"x": "2025-01", "y": 675000}, {"x": "2025-02", "y": 1546250}, {"x": "2025-03", "y": 1088750}, {"x": "2025-04", "y": 1452667}, {"x": "2025-05", "y": 1454231}, {"x": "2025-06", "y": 1453571}, {"x": "2025-07", "y": 813333}, {"x": "2025-08", "y": 1117273}, {"x": "2025-09", "y": 1209167}, {"x": "2025-10", "y": 1513571}, {"x": "2025-11", "y": 675000}, {"x": "2026-02", "y": 2375000}, {"x": "2026-03", "y": 717500}, {"x": "2026-04", "y": 1272778}, {"x": "2026-05", "y": 1293684}], "supply": [{"x": "2020-01", "y": 16}, {"x": "2020-02", "y": 18}, {"x": "2020-03", "y": 27}, {"x": "2020-04", "y": 42}, {"x": "2020-05", "y": 47}, {"x": "2020-06", "y": 38}, {"x": "2020-07", "y": 40}, {"x": "2020-08", "y": 46}, {"x": "2020-09", "y": 42}, {"x": "2020-10", "y": 25}, {"x": "2020-11", "y": 14}, {"x": "2020-12", "y": 5}, {"x": "2021-01", "y": 3}, {"x": "2021-02", "y": 4}, {"x": "2021-03", "y": 11}, {"x": "2021-04", "y": 33}, {"x": "2021-05", "y": 58}, {"x": "2021-06", "y": 62}, {"x": "2021-07", "y": 50}, {"x": "2021-08", "y": 51}, {"x": "2021-09", "y": 40}, {"x": "2021-10", "y": 20}, {"x": "2021-11", "y": 10}, {"x": "2021-12", "y": 7}, {"x": "2022-01", "y": 7}, {"x": "2022-02", "y": 8}, {"x": "2022-03", "y": 14}, {"x": "2022-04", "y": 31}, {"x": "2022-05", "y": 61}, {"x": "2022-06", "y": 64}, {"x": "2022-07", "y": 44}, {"x": "2022-08", "y": 48}, {"x": "2022-09", "y": 39}, {"x": "2022-10", "y": 30}, {"x": "2022-11", "y": 27}, {"x": "2022-12", "y": 18}, {"x": "2023-01", "y": 18}, {"x": "2023-02", "y": 15}, {"x": "2023-03", "y": 17}, {"x": "2023-04", "y": 29}, {"x": "2023-05", "y": 51}, {"x": "2023-06", "y": 45}, {"x": "2023-07", "y": 32}, {"x": "2023-08", "y": 43}, {"x": "2023-09", "y": 45}, {"x": "2023-10", "y": 32}, {"x": "2023-11", "y": 30}, {"x": "2023-12", "y": 27}, {"x": "2024-01", "y": 22}, {"x": "2024-02", "y": 18}, {"x": "2024-03", "y": 35}, {"x": "2024-04", "y": 40}, {"x": "2024-05", "y": 67}, {"x": "2024-06", "y": 65}, {"x": "2024-07", "y": 60}, {"x": "2024-08", "y": 62}, {"x": "2024-09", "y": 61}, {"x": "2024-10", "y": 50}, {"x": "2024-11", "y": 38}, {"x": "2024-12", "y": 25}, {"x": "2025-01", "y": 22}, {"x": "2025-02", "y": 22}, {"x": "2025-03", "y": 32}, {"x": "2025-04", "y": 51}, {"x": "2025-05", "y": 70}, {"x": "2025-06", "y": 62}, {"x": "2025-07", "y": 52}, {"x": "2025-08", "y": 51}, {"x": "2025-09", "y": 44}, {"x": "2025-10", "y": 35}, {"x": "2025-11", "y": 29}, {"x": "2025-12", "y": 22}, {"x": "2026-01", "y": 16}, {"x": "2026-02", "y": 17}, {"x": "2026-03", "y": 24}, {"x": "2026-04", "y": 26}, {"x": "2026-05", "y": 39}]}};
+
+  window.switchChartType = function(type, btn) {
+    btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const pd = typeData[type];
+    if (!pd) return;
+    if (pd.price && pd.price.length) {
+      priceChart.data.labels   = pd.price.map(p => p.x);
+      priceChart.data.datasets[0].data = pd.price.map(p => p.y);
+      priceChart.update();
+    }
+    if (pd.supply && pd.supply.length) {
+      supplyChart.data.labels   = pd.supply.map(p => p.x);
+      supplyChart.data.datasets[0].data = pd.supply.map(p => p.y);
+      supplyChart.update();
+    }
+  };
+})();
+</script>
+
+<footer>
+  <p>Marknadsdata hämtad från <a href="https://www.hemnet.se/statistik" target="_blank">Hemnet Bostadsstatistik</a> via öppet GraphQL-API.</p>
+  <p style="margin-top:6px">Genomsnittliga utgångspriser och utbudsdata per månad, alla bostadstyper. Senast uppdaterad maj 2026.</p>
+</footer>
+</body></html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bostadsmarknaden i Stockholms Län | 2020–2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+  :root {
+    --dark:    #013a14;
+    --medium:  #007e47;
+    --accent:  #0bb70b;
+    --bg:      #e4e8da;
+    --white:   #ffffff;
+    --card-bg: #ffffff;
+    --text:    #1a1a1a;
+    --muted:   #5a6a5e;
+    --border:  #c5d4bc;
+    --neg:     #c0392b;
+    --pos:     #007e47;
+    --shadow:  0 2px 12px rgba(1,58,20,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── NAV ── */
+  nav {
+    background: var(--dark);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .nav-logo {
+    font-size: 18px; font-weight: 700; color: #fff;
+    letter-spacing: -.3px; text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-home {
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    padding: 6px 12px; border-radius: 6px; transition: all .15s;
+    white-space: nowrap;
+  }
+  .nav-home:hover, .nav-home.active { background: rgba(255,255,255,.12); color: #fff; }
+
+  /* ── Dropdown ── */
+  .nav-dropdown { position: relative; margin-left: 4px; }
+  .nav-dropdown-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    font-family: 'Roboto', sans-serif;
+    padding: 6px 14px; border-radius: 6px;
+    background: transparent; border: 1px solid rgba(255,255,255,.2);
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .nav-dropdown-btn:hover, .nav-dropdown.open .nav-dropdown-btn {
+    background: rgba(255,255,255,.12); color: #fff;
+    border-color: rgba(255,255,255,.35);
+  }
+  .nav-dropdown-btn .chevron {
+    font-size: 10px; transition: transform .2s; display: inline-block;
+  }
+  .nav-dropdown.open .chevron { transform: rotate(180deg); }
+
+  .nav-dropdown-panel {
+    display: none;
+    position: absolute; top: calc(100% + 8px); left: 0;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(1,58,20,.18);
+    border: 1px solid var(--border);
+    z-index: 200; min-width: 480px;
+    padding: 8px;
+    columns: 2; column-gap: 0;
+  }
+  .nav-dropdown.open .nav-dropdown-panel { display: block; }
+
+  .nav-dropdown-panel a {
+    display: block; break-inside: avoid;
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 400; color: var(--text);
+    transition: background .12s, color .12s;
+    white-space: nowrap;
+  }
+  .nav-dropdown-panel a:hover { background: var(--bg); color: var(--dark); }
+  .nav-dropdown-panel a.active {
+    background: var(--dark); color: #fff; font-weight: 600;
+  }
+  .nav-dropdown-divider {
+    height: 1px; background: var(--border); margin: 4px 8px;
+    break-inside: avoid; column-span: all;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 56px 32px 48px;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; }
+  .hero-breadcrumb {
+    font-size: 12px; color: rgba(255,255,255,.55);
+    margin-bottom: 12px; letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+  .hero-breadcrumb a { color: rgba(255,255,255,.55); }
+  .hero-breadcrumb a:hover { color: rgba(255,255,255,.9); }
+  .hero h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700; letter-spacing: -.5px;
+    margin-bottom: 6px;
+  }
+  .hero-subtitle {
+    font-size: 15px; color: rgba(255,255,255,.65);
+    font-weight: 300; margin-bottom: 32px;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    backdrop-filter: blur(4px);
+  }
+  .hero-stat-label {
+    font-size: 11px; color: rgba(255,255,255,.55);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
+  .hero-stat-value {
+    font-size: 22px; font-weight: 700;
+    line-height: 1.1;
+  }
+  .hero-stat-sub {
+    font-size: 12px; margin-top: 4px;
+    font-weight: 400;
+  }
+  .hero-stat-sub.positive { color: #6ef06e; }
+  .hero-stat-sub.negative { color: #ff8a80; }
+
+  /* ── MAIN CONTENT ── */
+  .page-content { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: '';
+    width: 4px; height: 24px;
+    background: var(--medium);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .chart-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--dark); margin-bottom: 4px;
+  }
+  .chart-subtitle {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .chart-container { position: relative; height: 260px; }
+
+  /* ── ANALYSIS ── */
+  .analysis-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px 36px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .analysis-card p {
+    color: #2a3a2e;
+    font-size: 15px; line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .analysis-card p:last-child { margin-bottom: 0; }
+  .analysis-card strong { color: var(--dark); }
+
+  /* ── YOY TABLE ── */
+  .yoy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .yoy-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .yoy-period {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .4px;
+    margin-bottom: 6px; font-weight: 500;
+  }
+  .yoy-value {
+    font-size: 22px; font-weight: 700;
+  }
+  .yoy-value.positive { color: var(--pos); }
+  .yoy-value.negative { color: var(--neg); }
+
+  /* ── TYPE FILTER ── */
+  .type-filter {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .type-btn {
+    padding: 7px 16px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--card-bg); color: var(--muted);
+    font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+  }
+  .type-btn:hover { border-color: var(--medium); color: var(--dark); }
+  .type-btn.active {
+    background: var(--dark); border-color: var(--dark);
+    color: #fff;
+  }
+
+  /* ── KOMMUNER TABLE ── */
+  .kom-table-wrap {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+    overflow-x: auto;
+  }
+  .kom-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  .kom-table thead th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px;
+    color: var(--muted); padding: 0 12px 12px 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .kom-table thead th:not(:first-child) { text-align: right; }
+  .kom-table tbody tr { border-bottom: 1px solid var(--border); }
+  .kom-table tbody tr:last-child { border-bottom: none; }
+  .kom-table tbody td {
+    padding: 12px 12px 12px 0;
+    color: var(--text);
+  }
+  .kom-table tbody td:not(:first-child) { text-align: right; }
+  .kom-rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bg); font-size: 11px; font-weight: 700;
+    color: var(--muted); margin-right: 10px;
+  }
+  .kom-rank.top { background: var(--dark); color: #fff; }
+  .kom-growth { font-weight: 700; }
+  .kom-growth.positive { color: var(--pos); }
+  .kom-growth.negative { color: var(--neg); }
+
+  /* ── INDEX CARDS ── */
+  .lan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .lan-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    transition: transform .15s, box-shadow .15s;
+    cursor: pointer;
+  }
+  .lan-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(1,58,20,.15);
+  }
+  .lan-card-region {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 6px;
+  }
+  .lan-card-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+  }
+  .lan-card-stats { display: flex; flex-direction: column; gap: 12px; }
+  .lan-card-stat-row {
+    display: flex; justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lan-card-stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .lan-stat-label { font-size: 12px; color: var(--muted); }
+  .lan-stat-val { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .lan-stat-chg { font-size: 12px; font-weight: 600; }
+  .lan-stat-chg.positive { color: var(--pos); }
+  .lan-stat-chg.negative { color: var(--neg); }
+  .lan-card-cta {
+    margin-top: 20px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--medium);
+  }
+  .lan-card-cta:hover { color: var(--dark); }
+
+  /* ── INDEX HERO ── */
+  .index-hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 64px 32px 56px;
+    text-align: center;
+  }
+  .index-hero h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700; letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .index-hero p {
+    font-size: 17px; color: rgba(255,255,255,.65);
+    max-width: 560px; margin: 0 auto 40px;
+  }
+  .index-hero-stats {
+    display: flex; justify-content: center; gap: 48px;
+    flex-wrap: wrap;
+  }
+  .index-hero-stat { text-align: center; }
+  .index-hero-stat-val { font-size: 32px; font-weight: 700; }
+  .index-hero-stat-label { font-size: 12px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark);
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    padding: 28px 32px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  footer a { color: rgba(255,255,255,.7); }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+    <nav>
+      <a class="nav-logo" href="index.html">&#9632;<span>Bostads</span>data</a>
+      <a href="index.html" class="nav-home">Översikt</a>
+      <div class="nav-dropdown" id="navDropdown">
+        <button class="nav-dropdown-btn" onclick="toggleNav()" aria-haspopup="true">
+          Stockholms Län<span class="chevron">&#9660;</span>
+        </button>
+        <div class="nav-dropdown-panel" role="menu">
+          <a href="blekinge-lan.html">Blekinge Län</a>
+      <a href="dalarnas-lan.html">Dalarnas Län</a>
+      <a href="gotlands-lan.html">Gotlands Län</a>
+      <a href="gavleborgs-lan.html">Gävleborgs Län</a>
+      <a href="hallands-lan.html">Hallands Län</a>
+      <a href="jamtlands-lan.html">Jämtlands Län</a>
+      <a href="jonkopings-lan.html">Jönköpings Län</a>
+      <a href="kalmar-lan.html">Kalmar Län</a>
+      <a href="kronobergs-lan.html">Kronobergs Län</a>
+      <a href="norrbottens-lan.html">Norrbottens Län</a>
+      <a href="skane-lan.html">Skåne Län</a>
+      <a href="stockholms-lan.html" class="active">Stockholms Län</a>
+      <a href="sodermanlands-lan.html">Södermanlands Län</a>
+      <a href="uppsala-lan.html">Uppsala Län</a>
+      <a href="varmlands-lan.html">Värmlands Län</a>
+      <a href="vasterbottens-lan.html">Västerbottens Län</a>
+      <a href="vasternorrlands-lan.html">Västernorrlands Län</a>
+      <a href="vastmanlands-lan.html">Västmanlands Län</a>
+      <a href="vastragotalands-lan.html">Västra Götalands Län</a>
+      <a href="orebro-lan.html">Örebro Län</a>
+      <a href="ostergotlands-lan.html">Östergötlands Län</a>
+      
+        </div>
+      </div>
+    </nav>
+    <script>
+    function toggleNav() {
+      document.getElementById('navDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var d = document.getElementById('navDropdown');
+      if (d && !d.contains(e.target)) d.classList.remove('open');
+    });
+    </script>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-breadcrumb">
+      <a href="index.html">Översikt</a> &rsaquo; Stockholms Län
+    </div>
+    <h1>Bostadsmarknaden i Stockholms Län</h1>
+    <p class="hero-subtitle">Stockholmsregionen &middot; Marknadsdata januari 2020 – mars 2026</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-label">Genomsnittspris 2025</div>
+        <div class="hero-stat-value">4,49 Mkr</div>
+        <div class="hero-stat-sub positive">↑ +1,5% jämfört med 2024</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Förändring sedan 2020</div>
+        <div class="hero-stat-value">+14,9%</div>
+        <div class="hero-stat-sub" style="color:rgba(255,255,255,.5)">Från 3,91 Mkr → 4,49 Mkr</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Rekordpris</div>
+        <div class="hero-stat-value">5,02 Mkr</div>
+        <div class="hero-stat-sub negative">May 2025 &nbsp;·&nbsp; -3,5% från topp</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Utbud (snitt 2025)</div>
+        <div class="hero-stat-value">18 232</div>
+        <div class="hero-stat-sub positive">↑ +72,7% sedan 2020</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-content">
+
+  <!-- Charts -->
+  <h2 class="section-title">Prisutveckling &amp; utbud i Stockholms Län</h2>
+  <div class="type-filter">
+    <button class="type-btn active" onclick="switchChartType('ALL',this)">Alla typer</button>
+    <button class="type-btn" onclick="switchChartType('HOUSE',this)">Villor</button>
+    <button class="type-btn" onclick="switchChartType('APARTMENT',this)">Lägenheter</button>
+    <button class="type-btn" onclick="switchChartType('VACATION_HOME',this)">Fritidshus</button>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Utgångsprisernas utveckling</div>
+      <div class="chart-subtitle">Genomsnittligt utgångspris per månad (kr), alla bostadstyper</div>
+      <div class="chart-container"><canvas id="priceChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Utbudets utveckling</div>
+      <div class="chart-subtitle">Antal annonser på marknaden per månad</div>
+      <div class="chart-container"><canvas id="supplyChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- YoY changes -->
+  <h2 class="section-title">Årsvis prisutveckling i Stockholms Län</h2>
+  <div class="yoy-grid">
+    
+        <div class="yoy-card">
+          <div class="yoy-period">2020→2021</div>
+          <div class="yoy-value positive">↑ +7,6%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2021→2022</div>
+          <div class="yoy-value positive">↑ +6,1%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2022→2023</div>
+          <div class="yoy-value negative">↓ -0,7%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2023→2024</div>
+          <div class="yoy-value negative">↓ -0,1%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2024→2025</div>
+          <div class="yoy-value positive">↑ +1,5%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2025→2026</div>
+          <div class="yoy-value positive">↑ +2,1%</div>
+        </div>
+  </div>
+
+  <!-- Analysis -->
+  <h2 class="section-title">Marknadsanalys – Stockholms Län</h2>
+  <div class="analysis-card">
+    
+        <p>Stockholms läns bostadsmarknad har visat en anmärkningsvärd motståndskraft under perioden
+        2020–2026. Det genomsnittliga utgångspriset i länet ökade med
+        <strong>+14,9%</strong> – från 3,91 Mkr år 2020 till
+        4,49 Mkr år 2025. Marknaden nådde en topp i <strong>May 2025</strong>
+        med ett genomsnittspris på 5,02 Mkr, och befinner sig fortfarande mycket
+        nära dessa rekordnivåer.</p>
+
+        <p>Bland länets kommuner utmärker sig <strong>Danderyds</strong> och <strong>Norrtälje</strong>
+        som de starkaste i prisutveckling sedan 2020. Danderyds redovisar en uppgång på
+        <strong>+29,1%</strong> till ett genomsnittspris om 8,89 Mkr,
+        vilket speglar en stark efterfrågan på villor och bostadsrätter i dessa eftertraktade lägen.
+        Även <strong>Lidingö</strong> och <strong>Nacka</strong> har sett betydande prisuppgångar,
+        medan kommuner längre ut i pendlingszonen som <strong>Norrtälje</strong> och
+        <strong>Sigtuna</strong> visat oväntat stark tillväxt.</p>
+
+        <p>Räntehöjningarna 2022–2023 gav enbart ett kortvarigt prisfall om –0,8 procent i länet
+        som helhet, snabbt följt av återhämtning. Utbudet har ökat med
+        <strong>+72,7%</strong> sedan 2020, från i snitt
+        10 554 till 18 232 annonser per månad, men
+        efterfrågetrycket – särskilt i <strong>Stockholms kommun</strong> och dess närmaste grannkommuner
+        – har hållit priserna på historiskt höga nivåer.</p>
+        
+  </div>
+
+  <!-- Kommuner ranking table — by type -->
+  <h2 class="section-title">Kommuner med starkast prisutveckling i Stockholms Län</h2>
+  
+    <div class="type-filter"><button class="type-btn active" onclick="switchKomTable('stockholm','ALL',this)">Alla typer</button><button class="type-btn" onclick="switchKomTable('stockholm','HOUSE',this)">Villor</button><button class="type-btn" onclick="switchKomTable('stockholm','APARTMENT',this)">Lägenheter</button><button class="type-btn" onclick="switchKomTable('stockholm','VACATION_HOME',this)">Fritidshus</button></div>
+    <div class="kom-table-wrap">
+      <table class="kom-table" id="komTable_stockholm">
+        <thead>
+          <tr>
+            <th style="cursor:pointer" onclick="sortKomTable('stockholm','display')">Kommun ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('stockholm','p2020')">Snitt 2020 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('stockholm','p2025')">Snitt 2025 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('stockholm','growth')">Tillväxt ⇅</th>
+          </tr>
+        </thead>
+        <tbody id="komTbody_stockholm"></tbody>
+      </table>
+    </div>
+    <script>
+    (function(){
+      const KOM_DATA_STOCKHOLM = {"ALL": [{"display": "Danderyds", "p2020": 6885019, "p2025": 8885485, "growth": 29.1}, {"display": "Norrtälje", "p2020": 2254753, "p2025": 2910825, "growth": 29.1}, {"display": "Lidingö", "p2020": 6284153, "p2025": 7882217, "growth": 25.4}, {"display": "Vaxholms", "p2020": 5255819, "p2025": 6427945, "growth": 22.3}, {"display": "Tyresö", "p2020": 3606990, "p2025": 4405221, "growth": 22.1}, {"display": "Sigtuna", "p2020": 2940676, "p2025": 3580159, "growth": 21.7}, {"display": "Ekerö", "p2020": 4740432, "p2025": 5719733, "growth": 20.7}, {"display": "Värmdö", "p2020": 4479183, "p2025": 5396526, "growth": 20.5}, {"display": "Nacka", "p2020": 4597288, "p2025": 5514446, "growth": 19.9}, {"display": "Sollentuna", "p2020": 3898502, "p2025": 4557502, "growth": 16.9}, {"display": "Upplands-Bro", "p2020": 2748722, "p2025": 3178577, "growth": 15.6}, {"display": "Botkyrka", "p2020": 2656983, "p2025": 3066153, "growth": 15.4}, {"display": "Huddinge", "p2020": 3363397, "p2025": 3863019, "growth": 14.9}, {"display": "Vallentuna", "p2020": 3227995, "p2025": 3700554, "growth": 14.6}, {"display": "Stockholms", "p2020": 4331914, "p2025": 4948217, "growth": 14.2}, {"display": "Österåkers", "p2020": 3986864, "p2025": 4515404, "growth": 13.3}, {"display": "Haninge", "p2020": 2823367, "p2025": 3168581, "growth": 12.2}, {"display": "Solna", "p2020": 3424547, "p2025": 3831264, "growth": 11.9}, {"display": "Täby", "p2020": 4337207, "p2025": 4837922, "growth": 11.5}, {"display": "Järfälla", "p2020": 2796667, "p2025": 3071660, "growth": 9.8}, {"display": "Upplands Väsby", "p2020": 2894643, "p2025": 3146279, "growth": 8.7}, {"display": "Nynäshamns", "p2020": 2773102, "p2025": 2994685, "growth": 8.0}, {"display": "Nykvarns", "p2020": 3155116, "p2025": 3403513, "growth": 7.9}, {"display": "Södertälje", "p2020": 2368369, "p2025": 2551609, "growth": 7.7}, {"display": "Sundbybergs", "p2020": 3384611, "p2025": 3640399, "growth": 7.6}, {"display": "Salems", "p2020": 3194043, "p2025": 3414771, "growth": 6.9}], "HOUSE": [{"display": "Norrtälje", "p2020": 2932350, "p2025": 3786399, "growth": 29.1}, {"display": "Stockholms", "p2020": 8371020, "p2025": 10667938, "growth": 27.4}, {"display": "Tyresö", "p2020": 6142340, "p2025": 7799296, "growth": 27.0}, {"display": "Nacka", "p2020": 9841966, "p2025": 12166432, "growth": 23.6}, {"display": "Järfälla", "p2020": 5796804, "p2025": 7111266, "growth": 22.7}, {"display": "Sundbybergs", "p2020": 9399886, "p2025": 11521808, "growth": 22.6}, {"display": "Värmdö", "p2020": 6215914, "p2025": 7618444, "growth": 22.6}, {"display": "Täby", "p2020": 9348963, "p2025": 11416650, "growth": 22.1}, {"display": "Lidingö", "p2020": 15577782, "p2025": 18703226, "growth": 20.1}, {"display": "Sigtuna", "p2020": 5375728, "p2025": 6430719, "growth": 19.6}, {"display": "Sollentuna", "p2020": 8283964, "p2025": 9881421, "growth": 19.3}, {"display": "Salems", "p2020": 5675743, "p2025": 6709188, "growth": 18.2}, {"display": "Danderyds", "p2020": 14974824, "p2025": 17688185, "growth": 18.1}, {"display": "Ekerö", "p2020": 6090862, "p2025": 7139795, "growth": 17.2}, {"display": "Huddinge", "p2020": 6136156, "p2025": 7146417, "growth": 16.5}, {"display": "Upplands Väsby", "p2020": 5477215, "p2025": 6295210, "growth": 14.9}, {"display": "Nynäshamns", "p2020": 3878930, "p2025": 4443900, "growth": 14.6}, {"display": "Vaxholms", "p2020": 9758166, "p2025": 10911948, "growth": 11.8}, {"display": "Botkyrka", "p2020": 4975331, "p2025": 5515309, "growth": 10.9}, {"display": "Haninge", "p2020": 5359633, "p2025": 5944186, "growth": 10.9}, {"display": "Upplands-Bro", "p2020": 5001884, "p2025": 5535506, "growth": 10.7}, {"display": "Österåkers", "p2020": 6042714, "p2025": 6670233, "growth": 10.4}, {"display": "Vallentuna", "p2020": 5083893, "p2025": 5601736, "growth": 10.2}, {"display": "Nykvarns", "p2020": 4116741, "p2025": 4414167, "growth": 7.2}, {"display": "Södertälje", "p2020": 4223256, "p2025": 4473168, "growth": 5.9}, {"display": "Solna", "p2020": 13584917, "p2025": 11205000, "growth": -17.5}], "APARTMENT": [{"display": "Ekerö", "p2020": 39377, "p2025": 47489, "growth": 20.6}, {"display": "Lidingö", "p2020": 56280, "p2025": 64881, "growth": 15.3}, {"display": "Norrtälje", "p2020": 25771, "p2025": 29418, "growth": 14.1}, {"display": "Stockholms", "p2020": 69852, "p2025": 78755, "growth": 12.7}, {"display": "Nacka", "p2020": 50705, "p2025": 56925, "growth": 12.3}, {"display": "Solna", "p2020": 53621, "p2025": 60137, "growth": 12.2}, {"display": "Täby", "p2020": 42947, "p2025": 46920, "growth": 9.2}, {"display": "Danderyds", "p2020": 59682, "p2025": 65059, "growth": 9.0}, {"display": "Sundbybergs", "p2020": 53336, "p2025": 57799, "growth": 8.4}, {"display": "Värmdö", "p2020": 44353, "p2025": 47085, "growth": 6.2}, {"display": "Huddinge", "p2020": 36818, "p2025": 38584, "growth": 4.8}, {"display": "Vallentuna", "p2020": 32644, "p2025": 34179, "growth": 4.7}, {"display": "Vaxholms", "p2020": 43197, "p2025": 45152, "growth": 4.5}, {"display": "Österåkers", "p2020": 35756, "p2025": 37357, "growth": 4.5}, {"display": "Salems", "p2020": 30914, "p2025": 32062, "growth": 3.7}, {"display": "Tyresö", "p2020": 35507, "p2025": 36476, "growth": 2.7}, {"display": "Sigtuna", "p2020": 27202, "p2025": 27686, "growth": 1.8}, {"display": "Nynäshamns", "p2020": 25115, "p2025": 25544, "growth": 1.7}, {"display": "Nykvarns", "p2020": 32398, "p2025": 32928, "growth": 1.6}, {"display": "Haninge", "p2020": 29879, "p2025": 30308, "growth": 1.4}, {"display": "Järfälla", "p2020": 34589, "p2025": 34685, "growth": 0.3}, {"display": "Sollentuna", "p2020": 40955, "p2025": 40861, "growth": -0.2}, {"display": "Södertälje", "p2020": 27829, "p2025": 27408, "growth": -1.5}, {"display": "Botkyrka", "p2020": 30415, "p2025": 29509, "growth": -3.0}, {"display": "Upplands Väsby", "p2020": 33076, "p2025": 32005, "growth": -3.2}, {"display": "Upplands-Bro", "p2020": 29565, "p2025": 28325, "growth": -4.2}], "VACATION_HOME": [{"display": "Tyresö", "p2020": 3706875, "p2025": 5356250, "growth": 44.5}, {"display": "Huddinge", "p2020": 1920908, "p2025": 2768958, "growth": 44.1}, {"display": "Vallentuna", "p2020": 1710278, "p2025": 2404000, "growth": 40.6}, {"display": "Österåkers", "p2020": 3899117, "p2025": 5281906, "growth": 35.5}, {"display": "Nacka", "p2020": 4042083, "p2025": 5013750, "growth": 24.0}, {"display": "Upplands-Bro", "p2020": 1204167, "p2025": 1492202, "growth": 23.9}, {"display": "Norrtälje", "p2020": 2027380, "p2025": 2506323, "growth": 23.6}, {"display": "Södertälje", "p2020": 1140958, "p2025": 1267076, "growth": 11.1}, {"display": "Vaxholms", "p2020": 7935000, "p2025": 8348056, "growth": 5.2}, {"display": "Värmdö", "p2020": 4742249, "p2025": 4900769, "growth": 3.3}, {"display": "Ekerö", "p2020": 2598860, "p2025": 2589500, "growth": -0.4}, {"display": "Nynäshamns", "p2020": 3328731, "p2025": 3246348, "growth": -2.5}, {"display": "Solna", "p2020": 1195000, "p2025": 1161500, "growth": -2.8}, {"display": "Haninge", "p2020": 4603352, "p2025": 3470608, "growth": -24.6}, {"display": "Botkyrka", "p2020": 2276944, "p2025": 1697222, "growth": -25.5}, {"display": "Nykvarns", "p2020": 2150000, "p2025": 1549000, "growth": -28.0}, {"display": "Danderyds", "p2020": null, "p2025": null, "growth": null}, {"display": "Lidingö", "p2020": null, "p2025": null, "growth": null}, {"display": "Salems", "p2020": null, "p2025": null, "growth": null}, {"display": "Sigtuna", "p2020": null, "p2025": null, "growth": null}, {"display": "Sollentuna", "p2020": null, "p2025": null, "growth": null}, {"display": "Stockholms", "p2020": null, "p2025": null, "growth": null}, {"display": "Täby", "p2020": null, "p2025": null, "growth": null}, {"display": "Upplands Väsby", "p2020": null, "p2025": null, "growth": null}]};
+      let currentType_stockholm = 'ALL';
+      let sortCol_stockholm     = 'growth';
+      let sortAsc_stockholm     = false;
+
+      function fmtP(v) { return v ? (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2})+' Mkr' : '–'; }
+      function fmtG(v) { return v !== null ? (v>=0?'+':'')+v.toFixed(1).replace('.',',')+'%' : '–'; }
+
+      function renderKomTable_stockholm() {
+        const rows = [...KOM_DATA_STOCKHOLM[currentType_stockholm]];
+        rows.sort((a,b) => {
+          const av = a[sortCol_stockholm], bv = b[sortCol_stockholm];
+          if (av === null && bv === null) return 0;
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          if (typeof av === 'string') return sortAsc_stockholm ? av.localeCompare(bv,'sv') : bv.localeCompare(av,'sv');
+          return sortAsc_stockholm ? av - bv : bv - av;
+        });
+        const tbody = document.getElementById('komTbody_stockholm');
+        tbody.innerHTML = rows.map((r,i) => {
+          const rankCls = (i<3 && r.growth!==null) ? 'top' : '';
+          const gCls = r.growth===null ? '' : r.growth>=0 ? 'positive' : 'negative';
+          const rank = r.growth!==null ? `<span class="kom-rank ${rankCls}">${i+1}</span>` : '<span class="kom-rank" style="opacity:.3">–</span>';
+          return `<tr>
+            <td>${rank}${r.display}</td>
+            <td>${fmtP(r.p2020)}</td>
+            <td>${fmtP(r.p2025)}</td>
+            <td class="kom-growth ${gCls}">${fmtG(r.growth)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      window.switchKomTable = function(lan, type, btn) {
+        if (lan !== 'stockholm') return;
+        currentType_stockholm = type;
+        btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderKomTable_stockholm();
+      };
+      window.sortKomTable = function(lan, col) {
+        if (lan !== 'stockholm') return;
+        if (sortCol_stockholm === col) sortAsc_stockholm = !sortAsc_stockholm;
+        else { sortCol_stockholm = col; sortAsc_stockholm = col === 'display'; }
+        renderKomTable_stockholm();
+      };
+
+      renderKomTable_stockholm();
+    })();
+    </script>
+
+  <!-- Kommuner ranking table — by rooms -->
+  <h2 class="section-title">Prisutveckling per antal rum i Stockholms Län</h2>
+  
+    <div class="type-filter"><button class="type-btn active" onclick="switchRoomTable('stockholm','ALL',this)">Alla storlekar</button><button class="type-btn" onclick="switchRoomTable('stockholm','ROOM_1',this)">1 rum</button><button class="type-btn" onclick="switchRoomTable('stockholm','ROOM_2',this)">2 rum</button><button class="type-btn" onclick="switchRoomTable('stockholm','ROOM_3',this)">3 rum</button><button class="type-btn" onclick="switchRoomTable('stockholm','ROOM_4',this)">4 rum</button><button class="type-btn" onclick="switchRoomTable('stockholm','ROOM_5',this)">5+ rum</button></div>
+    <div class="kom-table-wrap">
+      <table class="kom-table" id="roomTable_stockholm">
+        <thead>
+          <tr>
+            <th style="cursor:pointer" onclick="sortRoomTable('stockholm','display')">Kommun ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('stockholm','p2020')">Snitt 2020 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('stockholm','p2025')">Snitt 2025 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('stockholm','growth')">Tillväxt ⇅</th>
+          </tr>
+        </thead>
+        <tbody id="roomTbody_stockholm"></tbody>
+      </table>
+    </div>
+    <script>
+    (function(){
+      const ROOM_DATA_STOCKHOLM = {"ALL": [{"display": "Danderyds", "p2020": 6885019, "p2025": 8885485, "growth": 29.1}, {"display": "Norrtälje", "p2020": 2254753, "p2025": 2910825, "growth": 29.1}, {"display": "Lidingö", "p2020": 6284153, "p2025": 7882217, "growth": 25.4}, {"display": "Vaxholms", "p2020": 5255819, "p2025": 6427945, "growth": 22.3}, {"display": "Tyresö", "p2020": 3606990, "p2025": 4405221, "growth": 22.1}, {"display": "Sigtuna", "p2020": 2940676, "p2025": 3580159, "growth": 21.7}, {"display": "Ekerö", "p2020": 4740432, "p2025": 5719733, "growth": 20.7}, {"display": "Värmdö", "p2020": 4479183, "p2025": 5396526, "growth": 20.5}, {"display": "Nacka", "p2020": 4597288, "p2025": 5514446, "growth": 19.9}, {"display": "Sollentuna", "p2020": 3898502, "p2025": 4557502, "growth": 16.9}, {"display": "Upplands-Bro", "p2020": 2748722, "p2025": 3178577, "growth": 15.6}, {"display": "Botkyrka", "p2020": 2656983, "p2025": 3066153, "growth": 15.4}, {"display": "Huddinge", "p2020": 3363397, "p2025": 3863019, "growth": 14.9}, {"display": "Vallentuna", "p2020": 3227995, "p2025": 3700554, "growth": 14.6}, {"display": "Stockholms", "p2020": 4331914, "p2025": 4948217, "growth": 14.2}, {"display": "Österåkers", "p2020": 3986864, "p2025": 4515404, "growth": 13.3}, {"display": "Haninge", "p2020": 2823367, "p2025": 3168581, "growth": 12.2}, {"display": "Solna", "p2020": 3424547, "p2025": 3831264, "growth": 11.9}, {"display": "Täby", "p2020": 4337207, "p2025": 4837922, "growth": 11.5}, {"display": "Järfälla", "p2020": 2796667, "p2025": 3071660, "growth": 9.8}, {"display": "Upplands Väsby", "p2020": 2894643, "p2025": 3146279, "growth": 8.7}, {"display": "Nynäshamns", "p2020": 2773102, "p2025": 2994685, "growth": 8.0}, {"display": "Nykvarns", "p2020": 3155116, "p2025": 3403513, "growth": 7.9}, {"display": "Södertälje", "p2020": 2368369, "p2025": 2551609, "growth": 7.7}, {"display": "Sundbybergs", "p2020": 3384611, "p2025": 3640399, "growth": 7.6}, {"display": "Salems", "p2020": 3194043, "p2025": 3414771, "growth": 6.9}], "ROOM_1": [{"display": "Ekerö", "p2020": 1890729, "p2025": 2436000, "growth": 28.8}, {"display": "Stockholms", "p2020": 2463734, "p2025": 2703481, "growth": 9.7}, {"display": "Österåkers", "p2020": 1612796, "p2025": 1769273, "growth": 9.7}, {"display": "Solna", "p2020": 2108878, "p2025": 2281378, "growth": 8.2}, {"display": "Värmdö", "p2020": 1879215, "p2025": 1986456, "growth": 5.7}, {"display": "Vaxholms", "p2020": 1761458, "p2025": 1806926, "growth": 2.6}, {"display": "Sundbybergs", "p2020": 2144098, "p2025": 2192519, "growth": 2.3}, {"display": "Danderyds", "p2020": 2052827, "p2025": 2087107, "growth": 1.7}, {"display": "Norrtälje", "p2020": 1133525, "p2025": 1152671, "growth": 1.7}, {"display": "Nacka", "p2020": 1887023, "p2025": 1888216, "growth": 0.1}, {"display": "Haninge", "p2020": 1420917, "p2025": 1412531, "growth": -0.6}, {"display": "Täby", "p2020": 1851160, "p2025": 1830131, "growth": -1.1}, {"display": "Lidingö", "p2020": 2187026, "p2025": 2141758, "growth": -2.1}, {"display": "Huddinge", "p2020": 1616479, "p2025": 1581488, "growth": -2.2}, {"display": "Salems", "p2020": 1362500, "p2025": 1321528, "growth": -3.0}, {"display": "Nynäshamns", "p2020": 1082935, "p2025": 1042879, "growth": -3.7}, {"display": "Järfälla", "p2020": 1489042, "p2025": 1428566, "growth": -4.1}, {"display": "Botkyrka", "p2020": 1398784, "p2025": 1322336, "growth": -5.5}, {"display": "Sigtuna", "p2020": 1208291, "p2025": 1137611, "growth": -5.8}, {"display": "Nykvarns", "p2020": 1315500, "p2025": 1237143, "growth": -6.0}, {"display": "Tyresö", "p2020": 1769264, "p2025": 1636240, "growth": -7.5}, {"display": "Vallentuna", "p2020": 1488090, "p2025": 1376702, "growth": -7.5}, {"display": "Sollentuna", "p2020": 1673976, "p2025": 1528772, "growth": -8.7}, {"display": "Upplands Väsby", "p2020": 1460400, "p2025": 1306804, "growth": -10.5}, {"display": "Södertälje", "p2020": 1167666, "p2025": 1033149, "growth": -11.5}, {"display": "Upplands-Bro", "p2020": 1297378, "p2025": 1092325, "growth": -15.8}], "ROOM_2": [{"display": "Vaxholms", "p2020": 2247330, "p2025": 2605516, "growth": 15.9}, {"display": "Ekerö", "p2020": 2447105, "p2025": 2780103, "growth": 13.6}, {"display": "Lidingö", "p2020": 3047186, "p2025": 3447443, "growth": 13.1}, {"display": "Stockholms", "p2020": 3448496, "p2025": 3883857, "growth": 12.6}, {"display": "Nykvarns", "p2020": 1847326, "p2025": 2055765, "growth": 11.3}, {"display": "Danderyds", "p2020": 3045699, "p2025": 3381764, "growth": 11.0}, {"display": "Solna", "p2020": 2859032, "p2025": 3165265, "growth": 10.7}, {"display": "Österåkers", "p2020": 2055678, "p2025": 2273155, "growth": 10.6}, {"display": "Norrtälje", "p2020": 1519904, "p2025": 1672810, "growth": 10.1}, {"display": "Upplands-Bro", "p2020": 1784161, "p2025": 1965002, "growth": 10.1}, {"display": "Sigtuna", "p2020": 1614832, "p2025": 1752086, "growth": 8.5}, {"display": "Nacka", "p2020": 2868418, "p2025": 3089908, "growth": 7.7}, {"display": "Huddinge", "p2020": 1932802, "p2025": 2074970, "growth": 7.4}, {"display": "Tyresö", "p2020": 2148286, "p2025": 2294251, "growth": 6.8}, {"display": "Sundbybergs", "p2020": 2746545, "p2025": 2896041, "growth": 5.4}, {"display": "Nynäshamns", "p2020": 1546103, "p2025": 1627363, "growth": 5.3}, {"display": "Täby", "p2020": 2332540, "p2025": 2446352, "growth": 4.9}, {"display": "Haninge", "p2020": 1720712, "p2025": 1790214, "growth": 4.0}, {"display": "Vallentuna", "p2020": 1866558, "p2025": 1931877, "growth": 3.5}, {"display": "Salems", "p2020": 1855619, "p2025": 1912447, "growth": 3.1}, {"display": "Sollentuna", "p2020": 2317877, "p2025": 2356213, "growth": 1.7}, {"display": "Värmdö", "p2020": 2593849, "p2025": 2633194, "growth": 1.5}, {"display": "Södertälje", "p2020": 1481049, "p2025": 1500573, "growth": 1.3}, {"display": "Botkyrka", "p2020": 1707712, "p2025": 1675343, "growth": -1.9}, {"display": "Järfälla", "p2020": 1970409, "p2025": 1915956, "growth": -2.8}, {"display": "Upplands Väsby", "p2020": 1920123, "p2025": 1834667, "growth": -4.5}], "ROOM_3": [{"display": "Vaxholms", "p2020": 3151681, "p2025": 4506644, "growth": 43.0}, {"display": "Norrtälje", "p2020": 2005766, "p2025": 2339829, "growth": 16.7}, {"display": "Värmdö", "p2020": 3549139, "p2025": 4120475, "growth": 16.1}, {"display": "Sigtuna", "p2020": 1946897, "p2025": 2225649, "growth": 14.3}, {"display": "Solna", "p2020": 3797655, "p2025": 4304320, "growth": 13.3}, {"display": "Huddinge", "p2020": 2427685, "p2025": 2734773, "growth": 12.6}, {"display": "Stockholms", "p2020": 5006570, "p2025": 5626155, "growth": 12.4}, {"display": "Nacka", "p2020": 3889989, "p2025": 4307161, "growth": 10.7}, {"display": "Österåkers", "p2020": 2732812, "p2025": 3000661, "growth": 9.8}, {"display": "Ekerö", "p2020": 3575205, "p2025": 3918641, "growth": 9.6}, {"display": "Täby", "p2020": 3154871, "p2025": 3455197, "growth": 9.5}, {"display": "Lidingö", "p2020": 4420256, "p2025": 4820329, "growth": 9.1}, {"display": "Tyresö", "p2020": 2648927, "p2025": 2884613, "growth": 8.9}, {"display": "Vallentuna", "p2020": 2231269, "p2025": 2398698, "growth": 7.5}, {"display": "Danderyds", "p2020": 4450954, "p2025": 4773377, "growth": 7.2}, {"display": "Nynäshamns", "p2020": 2282000, "p2025": 2425335, "growth": 6.3}, {"display": "Nykvarns", "p2020": 2323567, "p2025": 2466101, "growth": 6.1}, {"display": "Järfälla", "p2020": 2347745, "p2025": 2474637, "growth": 5.4}, {"display": "Haninge", "p2020": 2262918, "p2025": 2368622, "growth": 4.7}, {"display": "Botkyrka", "p2020": 2147434, "p2025": 2233746, "growth": 4.0}, {"display": "Sundbybergs", "p2020": 3833329, "p2025": 3976680, "growth": 3.7}, {"display": "Södertälje", "p2020": 1990839, "p2025": 2058774, "growth": 3.4}, {"display": "Salems", "p2020": 2509788, "p2025": 2552133, "growth": 1.7}, {"display": "Upplands Väsby", "p2020": 2266681, "p2025": 2304966, "growth": 1.7}, {"display": "Sollentuna", "p2020": 2890842, "p2025": 2836801, "growth": -1.9}, {"display": "Upplands-Bro", "p2020": 2223390, "p2025": 2065654, "growth": -7.1}], "ROOM_4": [{"display": "Lidingö", "p2020": 5466005, "p2025": 7597913, "growth": 39.0}, {"display": "Norrtälje", "p2020": 2466136, "p2025": 3245615, "growth": 31.6}, {"display": "Nacka", "p2020": 5094725, "p2025": 6229825, "growth": 22.3}, {"display": "Danderyds", "p2020": 6169876, "p2025": 7496272, "growth": 21.5}, {"display": "Österåkers", "p2020": 3540412, "p2025": 4276185, "growth": 20.8}, {"display": "Nykvarns", "p2020": 3154364, "p2025": 3807689, "growth": 20.7}, {"display": "Sundbybergs", "p2020": 4600696, "p2025": 5414378, "growth": 17.7}, {"display": "Upplands-Bro", "p2020": 2697871, "p2025": 3143735, "growth": 16.5}, {"display": "Haninge", "p2020": 3089718, "p2025": 3545747, "growth": 14.8}, {"display": "Sigtuna", "p2020": 3004965, "p2025": 3446249, "growth": 14.7}, {"display": "Stockholms", "p2020": 6588348, "p2025": 7505082, "growth": 13.9}, {"display": "Solna", "p2020": 4944486, "p2025": 5612410, "growth": 13.5}, {"display": "Tyresö", "p2020": 3483110, "p2025": 3826783, "growth": 9.9}, {"display": "Värmdö", "p2020": 4697872, "p2025": 5153635, "growth": 9.7}, {"display": "Ekerö", "p2020": 4459506, "p2025": 4840543, "growth": 8.5}, {"display": "Södertälje", "p2020": 2760719, "p2025": 2993576, "growth": 8.4}, {"display": "Täby", "p2020": 4328971, "p2025": 4692795, "growth": 8.4}, {"display": "Botkyrka", "p2020": 2879806, "p2025": 3110168, "growth": 8.0}, {"display": "Järfälla", "p2020": 3092208, "p2025": 3340046, "growth": 8.0}, {"display": "Sollentuna", "p2020": 4044753, "p2025": 4343154, "growth": 7.4}, {"display": "Vallentuna", "p2020": 3364935, "p2025": 3567250, "growth": 6.0}, {"display": "Salems", "p2020": 3199408, "p2025": 3386486, "growth": 5.8}, {"display": "Huddinge", "p2020": 3728244, "p2025": 3882524, "growth": 4.1}, {"display": "Vaxholms", "p2020": 4934913, "p2025": 5116194, "growth": 3.7}, {"display": "Nynäshamns", "p2020": 2784214, "p2025": 2875410, "growth": 3.3}, {"display": "Upplands Väsby", "p2020": 3219615, "p2025": 3063728, "growth": -4.8}], "ROOM_5": [{"display": "Nacka", "p2020": 6210120, "p2025": 8237681, "growth": 32.6}, {"display": "Norrtälje", "p2020": 3283533, "p2025": 4061834, "growth": 23.7}, {"display": "Täby", "p2020": 5992496, "p2025": 7261654, "growth": 21.2}, {"display": "Sigtuna", "p2020": 3881268, "p2025": 4683866, "growth": 20.7}, {"display": "Salems", "p2020": 3793760, "p2025": 4530561, "growth": 19.4}, {"display": "Lidingö", "p2020": 9547758, "p2025": 11387934, "growth": 19.3}, {"display": "Danderyds", "p2020": 9203425, "p2025": 10920618, "growth": 18.7}, {"display": "Vallentuna", "p2020": 4217092, "p2025": 4975335, "growth": 18.0}, {"display": "Botkyrka", "p2020": 3815398, "p2025": 4478227, "growth": 17.4}, {"display": "Upplands Väsby", "p2020": 4160930, "p2025": 4799140, "growth": 15.3}, {"display": "Solna", "p2020": 6445815, "p2025": 7428770, "growth": 15.2}, {"display": "Sollentuna", "p2020": 5488614, "p2025": 6308001, "growth": 14.9}, {"display": "Stockholms", "p2020": 7790277, "p2025": 8901640, "growth": 14.3}, {"display": "Huddinge", "p2020": 4945315, "p2025": 5612190, "growth": 13.5}, {"display": "Haninge", "p2020": 4203263, "p2025": 4696312, "growth": 11.7}, {"display": "Österåkers", "p2020": 4588489, "p2025": 5120353, "growth": 11.6}, {"display": "Sundbybergs", "p2020": 6614149, "p2025": 7342330, "growth": 11.0}, {"display": "Värmdö", "p2020": 6139690, "p2025": 6726686, "growth": 9.6}, {"display": "Tyresö", "p2020": 4981957, "p2025": 5424068, "growth": 8.9}, {"display": "Järfälla", "p2020": 4339366, "p2025": 4699915, "growth": 8.3}, {"display": "Nykvarns", "p2020": 3934353, "p2025": 4230909, "growth": 7.5}, {"display": "Södertälje", "p2020": 3696584, "p2025": 3963038, "growth": 7.2}, {"display": "Ekerö", "p2020": 5505035, "p2025": 5724659, "growth": 4.0}, {"display": "Vaxholms", "p2020": 6891145, "p2025": 7091371, "growth": 2.9}, {"display": "Upplands-Bro", "p2020": 3859653, "p2025": 3857698, "growth": -0.1}, {"display": "Nynäshamns", "p2020": 4124151, "p2025": 3546841, "growth": -14.0}]};
+      let currentRoom_room_stockholm = 'ALL';
+      let sortCol_room_stockholm     = 'growth';
+      let sortAsc_room_stockholm     = false;
+
+      function fmtP(v) { return v ? (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2})+' Mkr' : '–'; }
+      function fmtG(v) { return v !== null ? (v>=0?'+':'')+v.toFixed(1).replace('.',',')+' %' : '–'; }
+
+      function renderRoomTable_room_stockholm() {
+        const rows = [...ROOM_DATA_STOCKHOLM[currentRoom_room_stockholm]];
+        rows.sort((a,b) => {
+          const av = a[sortCol_room_stockholm], bv = b[sortCol_room_stockholm];
+          if (av === null && bv === null) return 0;
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          if (typeof av === 'string') return sortAsc_room_stockholm ? av.localeCompare(bv,'sv') : bv.localeCompare(av,'sv');
+          return sortAsc_room_stockholm ? av - bv : bv - av;
+        });
+        const tbody = document.getElementById('roomTbody_stockholm');
+        tbody.innerHTML = rows.map((r,i) => {
+          const rankCls = (i<3 && r.growth!==null) ? 'top' : '';
+          const gCls = r.growth===null ? '' : r.growth>=0 ? 'positive' : 'negative';
+          const rank = r.growth!==null
+            ? `<span class="kom-rank ${rankCls}">${i+1}</span>`
+            : '<span class="kom-rank" style="opacity:.3">–</span>';
+          return `<tr>
+            <td>${rank}${r.display}</td>
+            <td>${fmtP(r.p2020)}</td>
+            <td>${fmtP(r.p2025)}</td>
+            <td class="kom-growth ${gCls}">${fmtG(r.growth)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      window.switchRoomTable = function(lan, room, btn) {
+        if (lan !== 'stockholm') return;
+        currentRoom_room_stockholm = room;
+        btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderRoomTable_room_stockholm();
+      };
+      window.sortRoomTable = function(lan, col) {
+        if (lan !== 'stockholm') return;
+        if (sortCol_room_stockholm === col) sortAsc_room_stockholm = !sortAsc_room_stockholm;
+        else { sortCol_room_stockholm = col; sortAsc_room_stockholm = col === 'display'; }
+        renderRoomTable_room_stockholm();
+      };
+
+      renderRoomTable_room_stockholm();
+    })();
+    </script>
+
+
+</div>
+
+<script>
+(function() {
+  const priceLabels  = ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+  const priceValues  = [3765851, 3787187, 4053980, 3999802, 4055424, 3826206, 3294660, 3929357, 4181812, 4164257, 4091578, 3766437, 3925384, 4049676, 4254561, 4360218, 4605318, 4357381, 3560456, 4414964, 4504779, 4368193, 4364244, 3720189, 4282486, 4365500, 4791028, 4747544, 4898878, 4420019, 3848179, 4588767, 4569604, 4684232, 4394993, 3960268, 4307961, 4263223, 4497390, 4669057, 4884546, 4405838, 3853341, 4601135, 4723194, 4425349, 4512439, 4022782, 4291103, 4175975, 4402214, 4593589, 4885525, 4394832, 3698917, 4799437, 4767503, 4580038, 4433074, 4070477, 4468294, 4475436, 4724103, 4842594, 5023201, 4193797, 3836133, 4717004, 4839607, 4491528, 4392229, 3893128, 4468883, 4298500, 4545458, 4758027, 4847403];
+  const supplyLabels = ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+  const supplyValues = [9087, 10038, 11370, 11260, 12339, 11319, 8098, 11079, 12797, 12161, 10292, 6817, 8386, 9563, 10321, 11225, 12610, 10958, 6910, 10544, 12189, 11131, 9311, 6168, 7884, 9034, 10299, 11261, 13855, 12346, 8780, 12039, 13940, 13157, 11901, 9095, 9961, 10261, 10939, 11487, 13508, 12175, 9368, 13611, 16581, 16401, 15108, 12673, 13871, 14420, 15076, 15935, 18420, 16036, 13122, 18013, 19907, 18987, 17193, 14105, 16071, 16828, 18229, 19149, 21295, 18856, 15527, 19610, 21144, 19973, 17562, 14551, 15485, 16155, 16801, 17846, 19147];
+
+  function fmtPrice(v) {
+    return (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Mkr';
+  }
+  function fmtCount(v) {
+    return v.toLocaleString('sv-SE') + ' annonser';
+  }
+  function showYearTick(label) {
+    return label && label.endsWith('-01');
+  }
+  function yearLabel(label) {
+    return label ? label.substring(0,4) : '';
+  }
+
+  const gridColor  = 'rgba(1,58,20,.07)';
+  const labelColor = '#5a6a5e';
+  const baseFont   = { family: 'Roboto', size: 11 };
+
+  // ── Price chart ──────────────────────────────────────────────────────────
+  const priceCtx = document.getElementById('priceChart').getContext('2d');
+  const priceGrad = priceCtx.createLinearGradient(0, 0, 0, 260);
+  priceGrad.addColorStop(0, 'rgba(0,126,71,.25)');
+  priceGrad.addColorStop(1, 'rgba(0,126,71,.0)');
+
+  const priceChart = new Chart(priceCtx, {
+    type: 'line',
+    data: {
+      labels: priceLabels,
+      datasets: [{
+        data: priceValues,
+        borderColor: '#007e47',
+        backgroundColor: priceGrad,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#007e47',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#013a14',
+          titleFont: { ...baseFont, size: 12, weight: '700' },
+          bodyFont: baseFont,
+          padding: 12,
+          callbacks: {
+            title: ctx => { const l = ctx[0].label; return l ? l.substring(0,4) + ' ' + new Date(l+'-01').toLocaleString('sv-SE',{month:'short'}) : ''; },
+            label: ctx => ' ' + fmtPrice(ctx.raw),
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: function(val, idx) {
+              return showYearTick(priceLabels[idx]) ? yearLabel(priceLabels[idx]) : '';
+            },
+            maxRotation: 0,
+          },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: v => (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' Mkr',
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+
+  // ── Supply chart ─────────────────────────────────────────────────────────
+  const supplyCtx = document.getElementById('supplyChart').getContext('2d');
+  const supplyGrad = supplyCtx.createLinearGradient(0, 0, 0, 260);
+  supplyGrad.addColorStop(0, 'rgba(1,58,20,.20)');
+  supplyGrad.addColorStop(1, 'rgba(1,58,20,.0)');
+
+  const supplyChart = new Chart(supplyCtx, {
+    type: 'line',
+    data: {
+      labels: supplyLabels,
+      datasets: [{
+        data: supplyValues,
+        borderColor: '#013a14',
+        backgroundColor: supplyGrad,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#013a14',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#013a14',
+          titleFont: { ...baseFont, size: 12, weight: '700' },
+          bodyFont: baseFont,
+          padding: 12,
+          callbacks: {
+            title: ctx => { const l = ctx[0].label; return l ? l.substring(0,4) + ' ' + new Date(l+'-01').toLocaleString('sv-SE',{month:'short'}) : ''; },
+            label: ctx => ' ' + fmtCount(ctx.raw),
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: function(val, idx) {
+              return showYearTick(supplyLabels[idx]) ? yearLabel(supplyLabels[idx]) : '';
+            },
+            maxRotation: 0,
+          },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: v => v.toLocaleString('sv-SE'),
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+
+  // ── Type switching ───────────────────────────────────────────────────────
+  const typeData = {"ALL": {"price": [{"x": "2020-01", "y": 3765851}, {"x": "2020-02", "y": 3787187}, {"x": "2020-03", "y": 4053980}, {"x": "2020-04", "y": 3999802}, {"x": "2020-05", "y": 4055424}, {"x": "2020-06", "y": 3826206}, {"x": "2020-07", "y": 3294660}, {"x": "2020-08", "y": 3929357}, {"x": "2020-09", "y": 4181812}, {"x": "2020-10", "y": 4164257}, {"x": "2020-11", "y": 4091578}, {"x": "2020-12", "y": 3766437}, {"x": "2021-01", "y": 3925384}, {"x": "2021-02", "y": 4049676}, {"x": "2021-03", "y": 4254561}, {"x": "2021-04", "y": 4360218}, {"x": "2021-05", "y": 4605318}, {"x": "2021-06", "y": 4357381}, {"x": "2021-07", "y": 3560456}, {"x": "2021-08", "y": 4414964}, {"x": "2021-09", "y": 4504779}, {"x": "2021-10", "y": 4368193}, {"x": "2021-11", "y": 4364244}, {"x": "2021-12", "y": 3720189}, {"x": "2022-01", "y": 4282486}, {"x": "2022-02", "y": 4365500}, {"x": "2022-03", "y": 4791028}, {"x": "2022-04", "y": 4747544}, {"x": "2022-05", "y": 4898878}, {"x": "2022-06", "y": 4420019}, {"x": "2022-07", "y": 3848179}, {"x": "2022-08", "y": 4588767}, {"x": "2022-09", "y": 4569604}, {"x": "2022-10", "y": 4684232}, {"x": "2022-11", "y": 4394993}, {"x": "2022-12", "y": 3960268}, {"x": "2023-01", "y": 4307961}, {"x": "2023-02", "y": 4263223}, {"x": "2023-03", "y": 4497390}, {"x": "2023-04", "y": 4669057}, {"x": "2023-05", "y": 4884546}, {"x": "2023-06", "y": 4405838}, {"x": "2023-07", "y": 3853341}, {"x": "2023-08", "y": 4601135}, {"x": "2023-09", "y": 4723194}, {"x": "2023-10", "y": 4425349}, {"x": "2023-11", "y": 4512439}, {"x": "2023-12", "y": 4022782}, {"x": "2024-01", "y": 4291103}, {"x": "2024-02", "y": 4175975}, {"x": "2024-03", "y": 4402214}, {"x": "2024-04", "y": 4593589}, {"x": "2024-05", "y": 4885525}, {"x": "2024-06", "y": 4394832}, {"x": "2024-07", "y": 3698917}, {"x": "2024-08", "y": 4799437}, {"x": "2024-09", "y": 4767503}, {"x": "2024-10", "y": 4580038}, {"x": "2024-11", "y": 4433074}, {"x": "2024-12", "y": 4070477}, {"x": "2025-01", "y": 4468294}, {"x": "2025-02", "y": 4475436}, {"x": "2025-03", "y": 4724103}, {"x": "2025-04", "y": 4842594}, {"x": "2025-05", "y": 5023201}, {"x": "2025-06", "y": 4193797}, {"x": "2025-07", "y": 3836133}, {"x": "2025-08", "y": 4717004}, {"x": "2025-09", "y": 4839607}, {"x": "2025-10", "y": 4491528}, {"x": "2025-11", "y": 4392229}, {"x": "2025-12", "y": 3893128}, {"x": "2026-01", "y": 4468883}, {"x": "2026-02", "y": 4298500}, {"x": "2026-03", "y": 4545458}, {"x": "2026-04", "y": 4758027}, {"x": "2026-05", "y": 4847403}], "supply": [{"x": "2020-01", "y": 9087}, {"x": "2020-02", "y": 10038}, {"x": "2020-03", "y": 11370}, {"x": "2020-04", "y": 11260}, {"x": "2020-05", "y": 12339}, {"x": "2020-06", "y": 11319}, {"x": "2020-07", "y": 8098}, {"x": "2020-08", "y": 11079}, {"x": "2020-09", "y": 12797}, {"x": "2020-10", "y": 12161}, {"x": "2020-11", "y": 10292}, {"x": "2020-12", "y": 6817}, {"x": "2021-01", "y": 8386}, {"x": "2021-02", "y": 9563}, {"x": "2021-03", "y": 10321}, {"x": "2021-04", "y": 11225}, {"x": "2021-05", "y": 12610}, {"x": "2021-06", "y": 10958}, {"x": "2021-07", "y": 6910}, {"x": "2021-08", "y": 10544}, {"x": "2021-09", "y": 12189}, {"x": "2021-10", "y": 11131}, {"x": "2021-11", "y": 9311}, {"x": "2021-12", "y": 6168}, {"x": "2022-01", "y": 7884}, {"x": "2022-02", "y": 9034}, {"x": "2022-03", "y": 10299}, {"x": "2022-04", "y": 11261}, {"x": "2022-05", "y": 13855}, {"x": "2022-06", "y": 12346}, {"x": "2022-07", "y": 8780}, {"x": "2022-08", "y": 12039}, {"x": "2022-09", "y": 13940}, {"x": "2022-10", "y": 13157}, {"x": "2022-11", "y": 11901}, {"x": "2022-12", "y": 9095}, {"x": "2023-01", "y": 9961}, {"x": "2023-02", "y": 10261}, {"x": "2023-03", "y": 10939}, {"x": "2023-04", "y": 11487}, {"x": "2023-05", "y": 13508}, {"x": "2023-06", "y": 12175}, {"x": "2023-07", "y": 9368}, {"x": "2023-08", "y": 13611}, {"x": "2023-09", "y": 16581}, {"x": "2023-10", "y": 16401}, {"x": "2023-11", "y": 15108}, {"x": "2023-12", "y": 12673}, {"x": "2024-01", "y": 13871}, {"x": "2024-02", "y": 14420}, {"x": "2024-03", "y": 15076}, {"x": "2024-04", "y": 15935}, {"x": "2024-05", "y": 18420}, {"x": "2024-06", "y": 16036}, {"x": "2024-07", "y": 13122}, {"x": "2024-08", "y": 18013}, {"x": "2024-09", "y": 19907}, {"x": "2024-10", "y": 18987}, {"x": "2024-11", "y": 17193}, {"x": "2024-12", "y": 14105}, {"x": "2025-01", "y": 16071}, {"x": "2025-02", "y": 16828}, {"x": "2025-03", "y": 18229}, {"x": "2025-04", "y": 19149}, {"x": "2025-05", "y": 21295}, {"x": "2025-06", "y": 18856}, {"x": "2025-07", "y": 15527}, {"x": "2025-08", "y": 19610}, {"x": "2025-09", "y": 21144}, {"x": "2025-10", "y": 19973}, {"x": "2025-11", "y": 17562}, {"x": "2025-12", "y": 14551}, {"x": "2026-01", "y": 15485}, {"x": "2026-02", "y": 16155}, {"x": "2026-03", "y": 16801}, {"x": "2026-04", "y": 17846}, {"x": "2026-05", "y": 19147}]}, "HOUSE": {"price": [{"x": "2020-01", "y": 6525008}, {"x": "2020-02", "y": 6459075}, {"x": "2020-03", "y": 6701210}, {"x": "2020-04", "y": 6631565}, {"x": "2020-05", "y": 6682760}, {"x": "2020-06", "y": 6431341}, {"x": "2020-07", "y": 5563547}, {"x": "2020-08", "y": 6631912}, {"x": "2020-09", "y": 6996400}, {"x": "2020-10", "y": 7301003}, {"x": "2020-11", "y": 7168022}, {"x": "2020-12", "y": 6773917}, {"x": "2021-01", "y": 7269084}, {"x": "2021-02", "y": 7509028}, {"x": "2021-03", "y": 7319194}, {"x": "2021-04", "y": 7784002}, {"x": "2021-05", "y": 8429370}, {"x": "2021-06", "y": 7710727}, {"x": "2021-07", "y": 6691842}, {"x": "2021-08", "y": 8223751}, {"x": "2021-09", "y": 8181241}, {"x": "2021-10", "y": 7894270}, {"x": "2021-11", "y": 7887842}, {"x": "2021-12", "y": 7030201}, {"x": "2022-01", "y": 8422790}, {"x": "2022-02", "y": 7666409}, {"x": "2022-03", "y": 8330683}, {"x": "2022-04", "y": 8182611}, {"x": "2022-05", "y": 8422727}, {"x": "2022-06", "y": 7669868}, {"x": "2022-07", "y": 6309493}, {"x": "2022-08", "y": 7859820}, {"x": "2022-09", "y": 8096686}, {"x": "2022-10", "y": 7977182}, {"x": "2022-11", "y": 7687836}, {"x": "2022-12", "y": 7356850}, {"x": "2023-01", "y": 7720046}, {"x": "2023-02", "y": 7983077}, {"x": "2023-03", "y": 7867057}, {"x": "2023-04", "y": 7928299}, {"x": "2023-05", "y": 8535675}, {"x": "2023-06", "y": 7379135}, {"x": "2023-07", "y": 6344831}, {"x": "2023-08", "y": 7884508}, {"x": "2023-09", "y": 7798206}, {"x": "2023-10", "y": 7374967}, {"x": "2023-11", "y": 7469475}, {"x": "2023-12", "y": 7772799}, {"x": "2024-01", "y": 8035271}, {"x": "2024-02", "y": 7212988}, {"x": "2024-03", "y": 7419077}, {"x": "2024-04", "y": 7731071}, {"x": "2024-05", "y": 8269877}, {"x": "2024-06", "y": 7136604}, {"x": "2024-07", "y": 6463498}, {"x": "2024-08", "y": 8709210}, {"x": "2024-09", "y": 8077489}, {"x": "2024-10", "y": 8290336}, {"x": "2024-11", "y": 7453479}, {"x": "2024-12", "y": 7557061}, {"x": "2025-01", "y": 8055256}, {"x": "2025-02", "y": 7916860}, {"x": "2025-03", "y": 8037265}, {"x": "2025-04", "y": 8237979}, {"x": "2025-05", "y": 8673011}, {"x": "2025-06", "y": 6985240}, {"x": "2025-07", "y": 6433059}, {"x": "2025-08", "y": 8647552}, {"x": "2025-09", "y": 8894454}, {"x": "2025-10", "y": 8123330}, {"x": "2025-11", "y": 8005174}, {"x": "2025-12", "y": 6957210}, {"x": "2026-01", "y": 8489503}, {"x": "2026-02", "y": 7718458}, {"x": "2026-03", "y": 8059943}, {"x": "2026-04", "y": 8534198}, {"x": "2026-05", "y": 8443476}], "supply": [{"x": "2020-01", "y": 1128}, {"x": "2020-02", "y": 1260}, {"x": "2020-03", "y": 1513}, {"x": "2020-04", "y": 1654}, {"x": "2020-05", "y": 1727}, {"x": "2020-06", "y": 1520}, {"x": "2020-07", "y": 970}, {"x": "2020-08", "y": 1295}, {"x": "2020-09", "y": 1546}, {"x": "2020-10", "y": 1431}, {"x": "2020-11", "y": 1081}, {"x": "2020-12", "y": 667}, {"x": "2021-01", "y": 775}, {"x": "2021-02", "y": 975}, {"x": "2021-03", "y": 1134}, {"x": "2021-04", "y": 1448}, {"x": "2021-05", "y": 1774}, {"x": "2021-06", "y": 1616}, {"x": "2021-07", "y": 907}, {"x": "2021-08", "y": 1381}, {"x": "2021-09", "y": 1636}, {"x": "2021-10", "y": 1426}, {"x": "2021-11", "y": 1072}, {"x": "2021-12", "y": 718}, {"x": "2022-01", "y": 885}, {"x": "2022-02", "y": 999}, {"x": "2022-03", "y": 1266}, {"x": "2022-04", "y": 1649}, {"x": "2022-05", "y": 2237}, {"x": "2022-06", "y": 1986}, {"x": "2022-07", "y": 1336}, {"x": "2022-08", "y": 1882}, {"x": "2022-09", "y": 2180}, {"x": "2022-10", "y": 1983}, {"x": "2022-11", "y": 1741}, {"x": "2022-12", "y": 1320}, {"x": "2023-01", "y": 1354}, {"x": "2023-02", "y": 1421}, {"x": "2023-03", "y": 1551}, {"x": "2023-04", "y": 1698}, {"x": "2023-05", "y": 2244}, {"x": "2023-06", "y": 2119}, {"x": "2023-07", "y": 1597}, {"x": "2023-08", "y": 2207}, {"x": "2023-09", "y": 2676}, {"x": "2023-10", "y": 2478}, {"x": "2023-11", "y": 2100}, {"x": "2023-12", "y": 1682}, {"x": "2024-01", "y": 1726}, {"x": "2024-02", "y": 1815}, {"x": "2024-03", "y": 2065}, {"x": "2024-04", "y": 2327}, {"x": "2024-05", "y": 3021}, {"x": "2024-06", "y": 2734}, {"x": "2024-07", "y": 2147}, {"x": "2024-08", "y": 2912}, {"x": "2024-09", "y": 3220}, {"x": "2024-10", "y": 2854}, {"x": "2024-11", "y": 2336}, {"x": "2024-12", "y": 1880}, {"x": "2025-01", "y": 2022}, {"x": "2025-02", "y": 2212}, {"x": "2025-03", "y": 2567}, {"x": "2025-04", "y": 2979}, {"x": "2025-05", "y": 3498}, {"x": "2025-06", "y": 3041}, {"x": "2025-07", "y": 2436}, {"x": "2025-08", "y": 3012}, {"x": "2025-09", "y": 3210}, {"x": "2025-10", "y": 2838}, {"x": "2025-11", "y": 2295}, {"x": "2025-12", "y": 1764}, {"x": "2026-01", "y": 1772}, {"x": "2026-02", "y": 1865}, {"x": "2026-03", "y": 2001}, {"x": "2026-04", "y": 2253}, {"x": "2026-05", "y": 2687}]}, "APARTMENT": {"price": [{"x": "2020-01", "y": 55688}, {"x": "2020-02", "y": 55765}, {"x": "2020-03", "y": 58602}, {"x": "2020-04", "y": 55787}, {"x": "2020-05", "y": 57482}, {"x": "2020-06", "y": 55540}, {"x": "2020-07", "y": 54003}, {"x": "2020-08", "y": 57181}, {"x": "2020-09", "y": 59268}, {"x": "2020-10", "y": 59332}, {"x": "2020-11", "y": 59983}, {"x": "2020-12", "y": 55476}, {"x": "2021-01", "y": 59558}, {"x": "2021-02", "y": 60345}, {"x": "2021-03", "y": 60472}, {"x": "2021-04", "y": 60468}, {"x": "2021-05", "y": 61843}, {"x": "2021-06", "y": 58912}, {"x": "2021-07", "y": 55718}, {"x": "2021-08", "y": 61300}, {"x": "2021-09", "y": 61063}, {"x": "2021-10", "y": 59928}, {"x": "2021-11", "y": 62290}, {"x": "2021-12", "y": 55098}, {"x": "2022-01", "y": 62722}, {"x": "2022-02", "y": 64455}, {"x": "2022-03", "y": 66066}, {"x": "2022-04", "y": 64960}, {"x": "2022-05", "y": 65503}, {"x": "2022-06", "y": 60825}, {"x": "2022-07", "y": 59065}, {"x": "2022-08", "y": 63201}, {"x": "2022-09", "y": 62510}, {"x": "2022-10", "y": 63683}, {"x": "2022-11", "y": 61110}, {"x": "2022-12", "y": 56141}, {"x": "2023-01", "y": 61739}, {"x": "2023-02", "y": 60274}, {"x": "2023-03", "y": 62012}, {"x": "2023-04", "y": 61560}, {"x": "2023-05", "y": 62588}, {"x": "2023-06", "y": 59270}, {"x": "2023-07", "y": 57326}, {"x": "2023-08", "y": 63619}, {"x": "2023-09", "y": 63828}, {"x": "2023-10", "y": 61805}, {"x": "2023-11", "y": 62633}, {"x": "2023-12", "y": 56969}, {"x": "2024-01", "y": 61507}, {"x": "2024-02", "y": 60827}, {"x": "2024-03", "y": 61675}, {"x": "2024-04", "y": 63021}, {"x": "2024-05", "y": 64137}, {"x": "2024-06", "y": 60186}, {"x": "2024-07", "y": 56199}, {"x": "2024-08", "y": 64915}, {"x": "2024-09", "y": 64947}, {"x": "2024-10", "y": 62937}, {"x": "2024-11", "y": 64228}, {"x": "2024-12", "y": 56764}, {"x": "2025-01", "y": 63886}, {"x": "2025-02", "y": 63102}, {"x": "2025-03", "y": 64737}, {"x": "2025-04", "y": 64311}, {"x": "2025-05", "y": 65867}, {"x": "2025-06", "y": 58818}, {"x": "2025-07", "y": 56884}, {"x": "2025-08", "y": 65500}, {"x": "2025-09", "y": 65952}, {"x": "2025-10", "y": 63121}, {"x": "2025-11", "y": 63541}, {"x": "2025-12", "y": 57179}, {"x": "2026-01", "y": 64645}, {"x": "2026-02", "y": 63755}, {"x": "2026-03", "y": 65709}, {"x": "2026-04", "y": 66281}, {"x": "2026-05", "y": 66532}], "supply": [{"x": "2020-01", "y": 6873}, {"x": "2020-02", "y": 7584}, {"x": "2020-03", "y": 8487}, {"x": "2020-04", "y": 8108}, {"x": "2020-05", "y": 8949}, {"x": "2020-06", "y": 8189}, {"x": "2020-07", "y": 5982}, {"x": "2020-08", "y": 8420}, {"x": "2020-09", "y": 9767}, {"x": "2020-10", "y": 9450}, {"x": "2020-11", "y": 8139}, {"x": "2020-12", "y": 5430}, {"x": "2021-01", "y": 6846}, {"x": "2021-02", "y": 7720}, {"x": "2021-03", "y": 8127}, {"x": "2021-04", "y": 8492}, {"x": "2021-05", "y": 9375}, {"x": "2021-06", "y": 8021}, {"x": "2021-07", "y": 5159}, {"x": "2021-08", "y": 7975}, {"x": "2021-09", "y": 9156}, {"x": "2021-10", "y": 8494}, {"x": "2021-11", "y": 7223}, {"x": "2021-12", "y": 4760}, {"x": "2022-01", "y": 6222}, {"x": "2022-02", "y": 7115}, {"x": "2022-03", "y": 7892}, {"x": "2022-04", "y": 8245}, {"x": "2022-05", "y": 9848}, {"x": "2022-06", "y": 8701}, {"x": "2022-07", "y": 6240}, {"x": "2022-08", "y": 8599}, {"x": "2022-09", "y": 9906}, {"x": "2022-10", "y": 9375}, {"x": "2022-11", "y": 8545}, {"x": "2022-12", "y": 6471}, {"x": "2023-01", "y": 7273}, {"x": "2023-02", "y": 7428}, {"x": "2023-03", "y": 7882}, {"x": "2023-04", "y": 8118}, {"x": "2023-05", "y": 9234}, {"x": "2023-06", "y": 8194}, {"x": "2023-07", "y": 6315}, {"x": "2023-08", "y": 9475}, {"x": "2023-09", "y": 11632}, {"x": "2023-10", "y": 11689}, {"x": "2023-11", "y": 10998}, {"x": "2023-12", "y": 9241}, {"x": "2024-01", "y": 10360}, {"x": "2024-02", "y": 10717}, {"x": "2024-03", "y": 11031}, {"x": "2024-04", "y": 11431}, {"x": "2024-05", "y": 12723}, {"x": "2024-06", "y": 10865}, {"x": "2024-07", "y": 8906}, {"x": "2024-08", "y": 12500}, {"x": "2024-09", "y": 13891}, {"x": "2024-10", "y": 13517}, {"x": "2024-11", "y": 12573}, {"x": "2024-12", "y": 10288}, {"x": "2025-01", "y": 11907}, {"x": "2025-02", "y": 12402}, {"x": "2025-03", "y": 13306}, {"x": "2025-04", "y": 13567}, {"x": "2025-05", "y": 14797}, {"x": "2025-06", "y": 13052}, {"x": "2025-07", "y": 10786}, {"x": "2025-08", "y": 13929}, {"x": "2025-09", "y": 15073}, {"x": "2025-10", "y": 14478}, {"x": "2025-11", "y": 12948}, {"x": "2025-12", "y": 10788}, {"x": "2026-01", "y": 11697}, {"x": "2026-02", "y": 12207}, {"x": "2026-03", "y": 12634}, {"x": "2026-04", "y": 13180}, {"x": "2026-05", "y": 13865}]}, "VACATION_HOME": {"price": [{"x": "2020-01", "y": 3358333}, {"x": "2020-02", "y": 2311047}, {"x": "2020-03", "y": 2886520}, {"x": "2020-04", "y": 3484520}, {"x": "2020-05", "y": 3122639}, {"x": "2020-06", "y": 2717514}, {"x": "2020-07", "y": 2067300}, {"x": "2020-08", "y": 3552878}, {"x": "2020-09", "y": 2768596}, {"x": "2020-10", "y": 3915804}, {"x": "2020-11", "y": 2928167}, {"x": "2020-12", "y": 2546667}, {"x": "2021-01", "y": 2873519}, {"x": "2021-02", "y": 2882625}, {"x": "2021-03", "y": 3179167}, {"x": "2021-04", "y": 3263021}, {"x": "2021-05", "y": 3466216}, {"x": "2021-06", "y": 3298239}, {"x": "2021-07", "y": 2798956}, {"x": "2021-08", "y": 3909545}, {"x": "2021-09", "y": 3955382}, {"x": "2021-10", "y": 3509038}, {"x": "2021-11", "y": 2982720}, {"x": "2021-12", "y": 1975625}, {"x": "2022-01", "y": 2578286}, {"x": "2022-02", "y": 3327593}, {"x": "2022-03", "y": 2913246}, {"x": "2022-04", "y": 4035197}, {"x": "2022-05", "y": 3482176}, {"x": "2022-06", "y": 3480975}, {"x": "2022-07", "y": 2504379}, {"x": "2022-08", "y": 3596378}, {"x": "2022-09", "y": 3374819}, {"x": "2022-10", "y": 3424000}, {"x": "2022-11", "y": 3301923}, {"x": "2022-12", "y": 2444286}, {"x": "2023-01", "y": 2685000}, {"x": "2023-02", "y": 2519444}, {"x": "2023-03", "y": 2420645}, {"x": "2023-04", "y": 4996937}, {"x": "2023-05", "y": 3960391}, {"x": "2023-06", "y": 3273770}, {"x": "2023-07", "y": 3361857}, {"x": "2023-08", "y": 3482859}, {"x": "2023-09", "y": 2976571}, {"x": "2023-10", "y": 2982170}, {"x": "2023-11", "y": 3907294}, {"x": "2023-12", "y": 3575000}, {"x": "2024-01", "y": 2963889}, {"x": "2024-02", "y": 3207174}, {"x": "2024-03", "y": 2825462}, {"x": "2024-04", "y": 3327402}, {"x": "2024-05", "y": 3284660}, {"x": "2024-06", "y": 2744620}, {"x": "2024-07", "y": 2376622}, {"x": "2024-08", "y": 3764929}, {"x": "2024-09", "y": 3183961}, {"x": "2024-10", "y": 2680806}, {"x": "2024-11", "y": 3560000}, {"x": "2024-12", "y": 1842273}, {"x": "2025-01", "y": 2746111}, {"x": "2025-02", "y": 2821818}, {"x": "2025-03", "y": 3533239}, {"x": "2025-04", "y": 3198431}, {"x": "2025-05", "y": 3449576}, {"x": "2025-06", "y": 2936340}, {"x": "2025-07", "y": 4163095}, {"x": "2025-08", "y": 3517523}, {"x": "2025-09", "y": 2939848}, {"x": "2025-10", "y": 2705885}, {"x": "2025-11", "y": 2504688}, {"x": "2025-12", "y": 2843077}, {"x": "2026-01", "y": 3442000}, {"x": "2026-02", "y": 3171429}, {"x": "2026-03", "y": 3162900}, {"x": "2026-04", "y": 3196543}, {"x": "2026-05", "y": 3887584}], "supply": [{"x": "2020-01", "y": 65}, {"x": "2020-02", "y": 104}, {"x": "2020-03", "y": 180}, {"x": "2020-04", "y": 275}, {"x": "2020-05", "y": 331}, {"x": "2020-06", "y": 362}, {"x": "2020-07", "y": 264}, {"x": "2020-08", "y": 265}, {"x": "2020-09", "y": 250}, {"x": "2020-10", "y": 179}, {"x": "2020-11", "y": 117}, {"x": "2020-12", "y": 56}, {"x": "2021-01", "y": 48}, {"x": "2021-02", "y": 80}, {"x": "2021-03", "y": 165}, {"x": "2021-04", "y": 289}, {"x": "2021-05", "y": 347}, {"x": "2021-06", "y": 336}, {"x": "2021-07", "y": 239}, {"x": "2021-08", "y": 271}, {"x": "2021-09", "y": 260}, {"x": "2021-10", "y": 164}, {"x": "2021-11", "y": 88}, {"x": "2021-12", "y": 52}, {"x": "2022-01", "y": 49}, {"x": "2022-02", "y": 69}, {"x": "2022-03", "y": 111}, {"x": "2022-04", "y": 211}, {"x": "2022-05", "y": 331}, {"x": "2022-06", "y": 321}, {"x": "2022-07", "y": 220}, {"x": "2022-08", "y": 274}, {"x": "2022-09", "y": 257}, {"x": "2022-10", "y": 199}, {"x": "2022-11", "y": 146}, {"x": "2022-12", "y": 92}, {"x": "2023-01", "y": 84}, {"x": "2023-02", "y": 88}, {"x": "2023-03", "y": 122}, {"x": "2023-04", "y": 208}, {"x": "2023-05", "y": 312}, {"x": "2023-06", "y": 296}, {"x": "2023-07", "y": 203}, {"x": "2023-08", "y": 265}, {"x": "2023-09", "y": 260}, {"x": "2023-10", "y": 226}, {"x": "2023-11", "y": 166}, {"x": "2023-12", "y": 122}, {"x": "2024-01", "y": 115}, {"x": "2024-02", "y": 125}, {"x": "2024-03", "y": 173}, {"x": "2024-04", "y": 259}, {"x": "2024-05", "y": 427}, {"x": "2024-06", "y": 424}, {"x": "2024-07", "y": 373}, {"x": "2024-08", "y": 418}, {"x": "2024-09", "y": 390}, {"x": "2024-10", "y": 303}, {"x": "2024-11", "y": 224}, {"x": "2024-12", "y": 173}, {"x": "2025-01", "y": 176}, {"x": "2025-02", "y": 196}, {"x": "2025-03", "y": 259}, {"x": "2025-04", "y": 391}, {"x": "2025-05", "y": 528}, {"x": "2025-06", "y": 513}, {"x": "2025-07", "y": 421}, {"x": "2025-08", "y": 425}, {"x": "2025-09", "y": 397}, {"x": "2025-10", "y": 324}, {"x": "2025-11", "y": 250}, {"x": "2025-12", "y": 206}, {"x": "2026-01", "y": 194}, {"x": "2026-02", "y": 205}, {"x": "2026-03", "y": 266}, {"x": "2026-04", "y": 378}, {"x": "2026-05", "y": 481}]}};
+
+  window.switchChartType = function(type, btn) {
+    btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const pd = typeData[type];
+    if (!pd) return;
+    if (pd.price && pd.price.length) {
+      priceChart.data.labels   = pd.price.map(p => p.x);
+      priceChart.data.datasets[0].data = pd.price.map(p => p.y);
+      priceChart.update();
+    }
+    if (pd.supply && pd.supply.length) {
+      supplyChart.data.labels   = pd.supply.map(p => p.x);
+      supplyChart.data.datasets[0].data = pd.supply.map(p => p.y);
+      supplyChart.update();
+    }
+  };
+})();
+</script>
+
+<footer>
+  <p>Marknadsdata hämtad från <a href="https://www.hemnet.se/statistik" target="_blank">Hemnet Bostadsstatistik</a> via öppet GraphQL-API.</p>
+  <p style="margin-top:6px">Genomsnittliga utgångspriser och utbudsdata per månad, alla bostadstyper. Senast uppdaterad maj 2026.</p>
+</footer>
+</body></html>

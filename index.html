@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bostadsmarknaden i Sverige | Länsöversikt 2020–2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+  :root {
+    --dark:    #013a14;
+    --medium:  #007e47;
+    --accent:  #0bb70b;
+    --bg:      #e4e8da;
+    --white:   #ffffff;
+    --card-bg: #ffffff;
+    --text:    #1a1a1a;
+    --muted:   #5a6a5e;
+    --border:  #c5d4bc;
+    --neg:     #c0392b;
+    --pos:     #007e47;
+    --shadow:  0 2px 12px rgba(1,58,20,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── NAV ── */
+  nav {
+    background: var(--dark);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .nav-logo {
+    font-size: 18px; font-weight: 700; color: #fff;
+    letter-spacing: -.3px; text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-home {
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    padding: 6px 12px; border-radius: 6px; transition: all .15s;
+    white-space: nowrap;
+  }
+  .nav-home:hover, .nav-home.active { background: rgba(255,255,255,.12); color: #fff; }
+
+  /* ── Dropdown ── */
+  .nav-dropdown { position: relative; margin-left: 4px; }
+  .nav-dropdown-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    font-family: 'Roboto', sans-serif;
+    padding: 6px 14px; border-radius: 6px;
+    background: transparent; border: 1px solid rgba(255,255,255,.2);
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .nav-dropdown-btn:hover, .nav-dropdown.open .nav-dropdown-btn {
+    background: rgba(255,255,255,.12); color: #fff;
+    border-color: rgba(255,255,255,.35);
+  }
+  .nav-dropdown-btn .chevron {
+    font-size: 10px; transition: transform .2s; display: inline-block;
+  }
+  .nav-dropdown.open .chevron { transform: rotate(180deg); }
+
+  .nav-dropdown-panel {
+    display: none;
+    position: absolute; top: calc(100% + 8px); left: 0;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(1,58,20,.18);
+    border: 1px solid var(--border);
+    z-index: 200; min-width: 480px;
+    padding: 8px;
+    columns: 2; column-gap: 0;
+  }
+  .nav-dropdown.open .nav-dropdown-panel { display: block; }
+
+  .nav-dropdown-panel a {
+    display: block; break-inside: avoid;
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 400; color: var(--text);
+    transition: background .12s, color .12s;
+    white-space: nowrap;
+  }
+  .nav-dropdown-panel a:hover { background: var(--bg); color: var(--dark); }
+  .nav-dropdown-panel a.active {
+    background: var(--dark); color: #fff; font-weight: 600;
+  }
+  .nav-dropdown-divider {
+    height: 1px; background: var(--border); margin: 4px 8px;
+    break-inside: avoid; column-span: all;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 56px 32px 48px;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; }
+  .hero-breadcrumb {
+    font-size: 12px; color: rgba(255,255,255,.55);
+    margin-bottom: 12px; letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+  .hero-breadcrumb a { color: rgba(255,255,255,.55); }
+  .hero-breadcrumb a:hover { color: rgba(255,255,255,.9); }
+  .hero h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700; letter-spacing: -.5px;
+    margin-bottom: 6px;
+  }
+  .hero-subtitle {
+    font-size: 15px; color: rgba(255,255,255,.65);
+    font-weight: 300; margin-bottom: 32px;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    backdrop-filter: blur(4px);
+  }
+  .hero-stat-label {
+    font-size: 11px; color: rgba(255,255,255,.55);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
+  .hero-stat-value {
+    font-size: 22px; font-weight: 700;
+    line-height: 1.1;
+  }
+  .hero-stat-sub {
+    font-size: 12px; margin-top: 4px;
+    font-weight: 400;
+  }
+  .hero-stat-sub.positive { color: #6ef06e; }
+  .hero-stat-sub.negative { color: #ff8a80; }
+
+  /* ── MAIN CONTENT ── */
+  .page-content { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: '';
+    width: 4px; height: 24px;
+    background: var(--medium);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .chart-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--dark); margin-bottom: 4px;
+  }
+  .chart-subtitle {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .chart-container { position: relative; height: 260px; }
+
+  /* ── ANALYSIS ── */
+  .analysis-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px 36px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .analysis-card p {
+    color: #2a3a2e;
+    font-size: 15px; line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .analysis-card p:last-child { margin-bottom: 0; }
+  .analysis-card strong { color: var(--dark); }
+
+  /* ── YOY TABLE ── */
+  .yoy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .yoy-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .yoy-period {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .4px;
+    margin-bottom: 6px; font-weight: 500;
+  }
+  .yoy-value {
+    font-size: 22px; font-weight: 700;
+  }
+  .yoy-value.positive { color: var(--pos); }
+  .yoy-value.negative { color: var(--neg); }
+
+  /* ── TYPE FILTER ── */
+  .type-filter {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .type-btn {
+    padding: 7px 16px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--card-bg); color: var(--muted);
+    font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+  }
+  .type-btn:hover { border-color: var(--medium); color: var(--dark); }
+  .type-btn.active {
+    background: var(--dark); border-color: var(--dark);
+    color: #fff;
+  }
+
+  /* ── KOMMUNER TABLE ── */
+  .kom-table-wrap {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+    overflow-x: auto;
+  }
+  .kom-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  .kom-table thead th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px;
+    color: var(--muted); padding: 0 12px 12px 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .kom-table thead th:not(:first-child) { text-align: right; }
+  .kom-table tbody tr { border-bottom: 1px solid var(--border); }
+  .kom-table tbody tr:last-child { border-bottom: none; }
+  .kom-table tbody td {
+    padding: 12px 12px 12px 0;
+    color: var(--text);
+  }
+  .kom-table tbody td:not(:first-child) { text-align: right; }
+  .kom-rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bg); font-size: 11px; font-weight: 700;
+    color: var(--muted); margin-right: 10px;
+  }
+  .kom-rank.top { background: var(--dark); color: #fff; }
+  .kom-growth { font-weight: 700; }
+  .kom-growth.positive { color: var(--pos); }
+  .kom-growth.negative { color: var(--neg); }
+
+  /* ── INDEX CARDS ── */
+  .lan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .lan-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    transition: transform .15s, box-shadow .15s;
+    cursor: pointer;
+  }
+  .lan-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(1,58,20,.15);
+  }
+  .lan-card-region {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 6px;
+  }
+  .lan-card-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+  }
+  .lan-card-stats { display: flex; flex-direction: column; gap: 12px; }
+  .lan-card-stat-row {
+    display: flex; justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lan-card-stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .lan-stat-label { font-size: 12px; color: var(--muted); }
+  .lan-stat-val { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .lan-stat-chg { font-size: 12px; font-weight: 600; }
+  .lan-stat-chg.positive { color: var(--pos); }
+  .lan-stat-chg.negative { color: var(--neg); }
+  .lan-card-cta {
+    margin-top: 20px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--medium);
+  }
+  .lan-card-cta:hover { color: var(--dark); }
+
+  /* ── INDEX HERO ── */
+  .index-hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 64px 32px 56px;
+    text-align: center;
+  }
+  .index-hero h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700; letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .index-hero p {
+    font-size: 17px; color: rgba(255,255,255,.65);
+    max-width: 560px; margin: 0 auto 40px;
+  }
+  .index-hero-stats {
+    display: flex; justify-content: center; gap: 48px;
+    flex-wrap: wrap;
+  }
+  .index-hero-stat { text-align: center; }
+  .index-hero-stat-val { font-size: 32px; font-weight: 700; }
+  .index-hero-stat-label { font-size: 12px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark);
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    padding: 28px 32px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  footer a { color: rgba(255,255,255,.7); }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+    <nav>
+      <a class="nav-logo" href="index.html">&#9632;<span>Bostads</span>data</a>
+      <a href="index.html" class="nav-home active">Översikt</a>
+      <div class="nav-dropdown" id="navDropdown">
+        <button class="nav-dropdown-btn" onclick="toggleNav()" aria-haspopup="true">
+          Välj Län<span class="chevron">&#9660;</span>
+        </button>
+        <div class="nav-dropdown-panel" role="menu">
+          <a href="blekinge-lan.html">Blekinge Län</a>
+      <a href="dalarnas-lan.html">Dalarnas Län</a>
+      <a href="gotlands-lan.html">Gotlands Län</a>
+      <a href="gavleborgs-lan.html">Gävleborgs Län</a>
+      <a href="hallands-lan.html">Hallands Län</a>
+      <a href="jamtlands-lan.html">Jämtlands Län</a>
+      <a href="jonkopings-lan.html">Jönköpings Län</a>
+      <a href="kalmar-lan.html">Kalmar Län</a>
+      <a href="kronobergs-lan.html">Kronobergs Län</a>
+      <a href="norrbottens-lan.html">Norrbottens Län</a>
+      <a href="skane-lan.html">Skåne Län</a>
+      <a href="stockholms-lan.html">Stockholms Län</a>
+      <a href="sodermanlands-lan.html">Södermanlands Län</a>
+      <a href="uppsala-lan.html">Uppsala Län</a>
+      <a href="varmlands-lan.html">Värmlands Län</a>
+      <a href="vasterbottens-lan.html">Västerbottens Län</a>
+      <a href="vasternorrlands-lan.html">Västernorrlands Län</a>
+      <a href="vastmanlands-lan.html">Västmanlands Län</a>
+      <a href="vastragotalands-lan.html">Västra Götalands Län</a>
+      <a href="orebro-lan.html">Örebro Län</a>
+      <a href="ostergotlands-lan.html">Östergötlands Län</a>
+      
+        </div>
+      </div>
+    </nav>
+    <script>
+    function toggleNav() {
+      document.getElementById('navDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var d = document.getElementById('navDropdown');
+      if (d && !d.contains(e.target)) d.classList.remove('open');
+    });
+    </script>
+<div class="index-hero">
+  <h1>Bostadsmarknaden i Sverige</h1>
+  <p>Marknadsdata för utgångspriser och utbud per Län, 2020–2026. Data direkt från Hemnet.</p>
+  <div class="index-hero-stats">
+    <div class="index-hero-stat">
+      <div class="index-hero-stat-val">21</div>
+      <div class="index-hero-stat-label">Analyserade Län</div>
+    </div>
+    <div class="index-hero-stat">
+      <div class="index-hero-stat-val">288</div>
+      <div class="index-hero-stat-label">Kommuner med data</div>
+    </div>
+    <div class="index-hero-stat">
+      <div class="index-hero-stat-val">75+</div>
+      <div class="index-hero-stat-label">Månader historik</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-content">
+
+  <h2 class="section-title">Välj ett Län</h2>
+  <div class="lan-grid">
+    
+      <a href="stockholms-lan.html" class="lan-card">
+        <div class="lan-card-region">Stockholmsregionen</div>
+        <div class="lan-card-title">Stockholms Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">4,49 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +1,5%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +14,9%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">18 232 <span class="lan-stat-chg positive" style="font-size:11px">(+72,7%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="uppsala-lan.html" class="lan-card">
+        <div class="lan-card-region">Mälardalen</div>
+        <div class="lan-card-title">Uppsala Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,69 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -0,9%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +7,8%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">3 075 <span class="lan-stat-chg positive" style="font-size:11px">(+80,8%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="sodermanlands-lan.html" class="lan-card">
+        <div class="lan-card-region">Mälardalen</div>
+        <div class="lan-card-title">Södermanlands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,59 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +3,4%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +22,6%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">2 712 <span class="lan-stat-chg positive" style="font-size:11px">(+135,2%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="ostergotlands-lan.html" class="lan-card">
+        <div class="lan-card-region">Götaland</div>
+        <div class="lan-card-title">Östergötlands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,43 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -1,1%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +11,4%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">2 396 <span class="lan-stat-chg positive" style="font-size:11px">(+61,4%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="jonkopings-lan.html" class="lan-card">
+        <div class="lan-card-region">Götaland</div>
+        <div class="lan-card-title">Jönköpings Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,26 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +2,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +14,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 935 <span class="lan-stat-chg positive" style="font-size:11px">(+115,7%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="kronobergs-lan.html" class="lan-card">
+        <div class="lan-card-region">Götaland</div>
+        <div class="lan-card-title">Kronobergs Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,13 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -2,5%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +10,1%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 596 <span class="lan-stat-chg positive" style="font-size:11px">(+159,5%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="kalmar-lan.html" class="lan-card">
+        <div class="lan-card-region">Götaland</div>
+        <div class="lan-card-title">Kalmar Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">1,95 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -2,2%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +17,1%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 985 <span class="lan-stat-chg positive" style="font-size:11px">(+106,1%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="gotlands-lan.html" class="lan-card">
+        <div class="lan-card-region">Gotland</div>
+        <div class="lan-card-title">Gotlands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">3,43 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +6,8%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +36,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">606 <span class="lan-stat-chg positive" style="font-size:11px">(+89,2%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="blekinge-lan.html" class="lan-card">
+        <div class="lan-card-region">Södra Sverige</div>
+        <div class="lan-card-title">Blekinge Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,10 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +4,4%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +23,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">904 <span class="lan-stat-chg positive" style="font-size:11px">(+87,0%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="skane-lan.html" class="lan-card">
+        <div class="lan-card-region">Södra Sverige</div>
+        <div class="lan-card-title">Skåne Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">3,01 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +3,1%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +21,8%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">9 221 <span class="lan-stat-chg positive" style="font-size:11px">(+93,6%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="hallands-lan.html" class="lan-card">
+        <div class="lan-card-region">Västsverige</div>
+        <div class="lan-card-title">Hallands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">3,61 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +4,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +25,1%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 514 <span class="lan-stat-chg positive" style="font-size:11px">(+84,9%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="vastragotalands-lan.html" class="lan-card">
+        <div class="lan-card-region">Västsverige</div>
+        <div class="lan-card-title">Västra Götalands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,93 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +0,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +12,3%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">10 034 <span class="lan-stat-chg positive" style="font-size:11px">(+89,2%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="varmlands-lan.html" class="lan-card">
+        <div class="lan-card-region">Mellansverige</div>
+        <div class="lan-card-title">Värmlands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">1,75 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +1,3%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +22,2%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 821 <span class="lan-stat-chg positive" style="font-size:11px">(+71,8%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="orebro-lan.html" class="lan-card">
+        <div class="lan-card-region">Mellansverige</div>
+        <div class="lan-card-title">Örebro Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,14 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +0,9%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +13,7%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">2 259 <span class="lan-stat-chg positive" style="font-size:11px">(+114,5%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="vastmanlands-lan.html" class="lan-card">
+        <div class="lan-card-region">Mellansverige</div>
+        <div class="lan-card-title">Västmanlands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">1,97 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -1,6%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +13,5%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 796 <span class="lan-stat-chg positive" style="font-size:11px">(+98,7%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="dalarnas-lan.html" class="lan-card">
+        <div class="lan-card-region">Norrland</div>
+        <div class="lan-card-title">Dalarnas Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">1,96 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +1,7%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +24,7%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">2 781 <span class="lan-stat-chg positive" style="font-size:11px">(+113,4%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="gavleborgs-lan.html" class="lan-card">
+        <div class="lan-card-region">Norrland</div>
+        <div class="lan-card-title">Gävleborgs Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">1,80 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +1,2%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +17,2%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">2 478 <span class="lan-stat-chg positive" style="font-size:11px">(+117,3%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="vasternorrlands-lan.html" class="lan-card">
+        <div class="lan-card-region">Norrland</div>
+        <div class="lan-card-title">Västernorrlands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">1,50 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -0,1%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +16,8%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 816 <span class="lan-stat-chg positive" style="font-size:11px">(+90,7%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="jamtlands-lan.html" class="lan-card">
+        <div class="lan-card-region">Norrland</div>
+        <div class="lan-card-title">Jämtlands Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,54 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg positive">↑ +5,9%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +29,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 593 <span class="lan-stat-chg positive" style="font-size:11px">(+103,7%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="vasterbottens-lan.html" class="lan-card">
+        <div class="lan-card-region">Norrland</div>
+        <div class="lan-card-title">Västerbottens Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">2,22 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -2,8%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +18,9%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">2 080 <span class="lan-stat-chg positive" style="font-size:11px">(+128,9%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+      <a href="norrbottens-lan.html" class="lan-card">
+        <div class="lan-card-region">Norrland</div>
+        <div class="lan-card-title">Norrbottens Län</div>
+        <div class="lan-card-stats">
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Snitt utgångspris 2025</span>
+            <span class="lan-stat-val">1,75 Mkr</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring 2024 → 2025</span>
+            <span class="lan-stat-chg negative">↓ -1,0%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Förändring sedan 2020</span>
+            <span class="lan-stat-chg positive">↑ +26,5%</span>
+          </div>
+          <div class="lan-card-stat-row">
+            <span class="lan-stat-label">Utbud (snitt 2025)</span>
+            <span class="lan-stat-val">1 159 <span class="lan-stat-chg positive" style="font-size:11px">(+32,7%)</span></span>
+          </div>
+        </div>
+        <div class="lan-card-cta">Visa marknadsdata &rarr;</div>
+      </a>
+  </div>
+
+  <h2 class="section-title">Prisjämförelse — genomsnittligt utgångspris 2025</h2>
+  <div class="chart-card" style="margin-bottom:40px">
+    <div class="chart-title">Utgångspriser per Län (snitt 2025)</div>
+    <div class="chart-subtitle">Genomsnittligt utgångspris 2025 per Län, sorterat — alla bostadstyper, PRE_OWNED</div>
+    <div class="chart-container" style="height:560px"><canvas id="compChart"></canvas></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const labels = ["Stockholms", "Hallands", "Gotlands", "Sk\u00e5ne", "V\u00e4stra G\u00f6talands", "Uppsala", "S\u00f6dermanlands", "J\u00e4mtlands", "\u00d6sterg\u00f6tlands", "J\u00f6nk\u00f6pings", "V\u00e4sterbottens", "\u00d6rebro", "Kronobergs", "Blekinge", "V\u00e4stmanlands", "Dalarnas", "Kalmar", "G\u00e4vleborgs", "V\u00e4rmlands", "Norrbottens", "V\u00e4sternorrlands"];
+  const values = [4491421.166666667, 3611825.6666666665, 3432255.0833333335, 3007123.0833333335, 2926862.8333333335, 2687643.5833333335, 2592153.5833333335, 2540516.3333333335, 2429168.0833333335, 2261062.8333333335, 2220570.1666666665, 2136573.4166666665, 2129036.6666666665, 2097955.25, 1973604.0, 1957122.0, 1946959.3333333333, 1795906.75, 1753138.75, 1749188.8333333333, 1496655.3333333333];
+  const baseFont   = { family: 'Roboto', size: 11 };
+  const labelColor = '#5a6a5e';
+  const gridColor  = 'rgba(1,58,20,.07)';
+
+  // Gradient: darker green for higher prices
+  const maxVal = Math.max(...values);
+  const colors = values.map(v => {
+    const t = v / maxVal;
+    const r = Math.round(1   + t * (0   - 1));
+    const g = Math.round(58  + t * (126 - 58));
+    const b = Math.round(20  + t * (71  - 20));
+    return `rgb(${r},${g},${b})`;
+  });
+
+  new Chart(document.getElementById('compChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#013a14',
+          titleFont: { ...baseFont, size: 12, weight: '700' },
+          bodyFont: baseFont,
+          padding: 12,
+          callbacks: {
+            label: ctx => ' ' + (ctx.raw/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Mkr',
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: v => (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' Mkr',
+          },
+          border: { display: false },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: labelColor, font: { ...baseFont, size: 10 } },
+          border: { display: false },
+        }
+      }
+    }
+  });
+})();
+</script>
+
+<footer>
+  <p>Marknadsdata hämtad från <a href="https://www.hemnet.se/statistik" target="_blank">Hemnet Bostadsstatistik</a> via öppet GraphQL-API.</p>
+  <p style="margin-top:6px">Genomsnittliga utgångspriser och utbudsdata per månad, alla bostadstyper. Senast uppdaterad maj 2026.</p>
+</footer>
+</body></html>

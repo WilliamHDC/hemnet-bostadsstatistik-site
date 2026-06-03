@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bostadsmarknaden i Örebro Län | 2020–2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+  :root {
+    --dark:    #013a14;
+    --medium:  #007e47;
+    --accent:  #0bb70b;
+    --bg:      #e4e8da;
+    --white:   #ffffff;
+    --card-bg: #ffffff;
+    --text:    #1a1a1a;
+    --muted:   #5a6a5e;
+    --border:  #c5d4bc;
+    --neg:     #c0392b;
+    --pos:     #007e47;
+    --shadow:  0 2px 12px rgba(1,58,20,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── NAV ── */
+  nav {
+    background: var(--dark);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .nav-logo {
+    font-size: 18px; font-weight: 700; color: #fff;
+    letter-spacing: -.3px; text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-home {
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    padding: 6px 12px; border-radius: 6px; transition: all .15s;
+    white-space: nowrap;
+  }
+  .nav-home:hover, .nav-home.active { background: rgba(255,255,255,.12); color: #fff; }
+
+  /* ── Dropdown ── */
+  .nav-dropdown { position: relative; margin-left: 4px; }
+  .nav-dropdown-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+    font-family: 'Roboto', sans-serif;
+    padding: 6px 14px; border-radius: 6px;
+    background: transparent; border: 1px solid rgba(255,255,255,.2);
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .nav-dropdown-btn:hover, .nav-dropdown.open .nav-dropdown-btn {
+    background: rgba(255,255,255,.12); color: #fff;
+    border-color: rgba(255,255,255,.35);
+  }
+  .nav-dropdown-btn .chevron {
+    font-size: 10px; transition: transform .2s; display: inline-block;
+  }
+  .nav-dropdown.open .chevron { transform: rotate(180deg); }
+
+  .nav-dropdown-panel {
+    display: none;
+    position: absolute; top: calc(100% + 8px); left: 0;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(1,58,20,.18);
+    border: 1px solid var(--border);
+    z-index: 200; min-width: 480px;
+    padding: 8px;
+    columns: 2; column-gap: 0;
+  }
+  .nav-dropdown.open .nav-dropdown-panel { display: block; }
+
+  .nav-dropdown-panel a {
+    display: block; break-inside: avoid;
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 400; color: var(--text);
+    transition: background .12s, color .12s;
+    white-space: nowrap;
+  }
+  .nav-dropdown-panel a:hover { background: var(--bg); color: var(--dark); }
+  .nav-dropdown-panel a.active {
+    background: var(--dark); color: #fff; font-weight: 600;
+  }
+  .nav-dropdown-divider {
+    height: 1px; background: var(--border); margin: 4px 8px;
+    break-inside: avoid; column-span: all;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 56px 32px 48px;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; }
+  .hero-breadcrumb {
+    font-size: 12px; color: rgba(255,255,255,.55);
+    margin-bottom: 12px; letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+  .hero-breadcrumb a { color: rgba(255,255,255,.55); }
+  .hero-breadcrumb a:hover { color: rgba(255,255,255,.9); }
+  .hero h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700; letter-spacing: -.5px;
+    margin-bottom: 6px;
+  }
+  .hero-subtitle {
+    font-size: 15px; color: rgba(255,255,255,.65);
+    font-weight: 300; margin-bottom: 32px;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    backdrop-filter: blur(4px);
+  }
+  .hero-stat-label {
+    font-size: 11px; color: rgba(255,255,255,.55);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
+  .hero-stat-value {
+    font-size: 22px; font-weight: 700;
+    line-height: 1.1;
+  }
+  .hero-stat-sub {
+    font-size: 12px; margin-top: 4px;
+    font-weight: 400;
+  }
+  .hero-stat-sub.positive { color: #6ef06e; }
+  .hero-stat-sub.negative { color: #ff8a80; }
+
+  /* ── MAIN CONTENT ── */
+  .page-content { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: '';
+    width: 4px; height: 24px;
+    background: var(--medium);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .chart-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--dark); margin-bottom: 4px;
+  }
+  .chart-subtitle {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .chart-container { position: relative; height: 260px; }
+
+  /* ── ANALYSIS ── */
+  .analysis-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px 36px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .analysis-card p {
+    color: #2a3a2e;
+    font-size: 15px; line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .analysis-card p:last-child { margin-bottom: 0; }
+  .analysis-card strong { color: var(--dark); }
+
+  /* ── YOY TABLE ── */
+  .yoy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .yoy-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .yoy-period {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .4px;
+    margin-bottom: 6px; font-weight: 500;
+  }
+  .yoy-value {
+    font-size: 22px; font-weight: 700;
+  }
+  .yoy-value.positive { color: var(--pos); }
+  .yoy-value.negative { color: var(--neg); }
+
+  /* ── TYPE FILTER ── */
+  .type-filter {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .type-btn {
+    padding: 7px 16px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--card-bg); color: var(--muted);
+    font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+  }
+  .type-btn:hover { border-color: var(--medium); color: var(--dark); }
+  .type-btn.active {
+    background: var(--dark); border-color: var(--dark);
+    color: #fff;
+  }
+
+  /* ── KOMMUNER TABLE ── */
+  .kom-table-wrap {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+    overflow-x: auto;
+  }
+  .kom-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  .kom-table thead th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px;
+    color: var(--muted); padding: 0 12px 12px 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .kom-table thead th:not(:first-child) { text-align: right; }
+  .kom-table tbody tr { border-bottom: 1px solid var(--border); }
+  .kom-table tbody tr:last-child { border-bottom: none; }
+  .kom-table tbody td {
+    padding: 12px 12px 12px 0;
+    color: var(--text);
+  }
+  .kom-table tbody td:not(:first-child) { text-align: right; }
+  .kom-rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bg); font-size: 11px; font-weight: 700;
+    color: var(--muted); margin-right: 10px;
+  }
+  .kom-rank.top { background: var(--dark); color: #fff; }
+  .kom-growth { font-weight: 700; }
+  .kom-growth.positive { color: var(--pos); }
+  .kom-growth.negative { color: var(--neg); }
+
+  /* ── INDEX CARDS ── */
+  .lan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .lan-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    transition: transform .15s, box-shadow .15s;
+    cursor: pointer;
+  }
+  .lan-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(1,58,20,.15);
+  }
+  .lan-card-region {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 6px;
+  }
+  .lan-card-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--dark); margin-bottom: 20px;
+  }
+  .lan-card-stats { display: flex; flex-direction: column; gap: 12px; }
+  .lan-card-stat-row {
+    display: flex; justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lan-card-stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .lan-stat-label { font-size: 12px; color: var(--muted); }
+  .lan-stat-val { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .lan-stat-chg { font-size: 12px; font-weight: 600; }
+  .lan-stat-chg.positive { color: var(--pos); }
+  .lan-stat-chg.negative { color: var(--neg); }
+  .lan-card-cta {
+    margin-top: 20px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--medium);
+  }
+  .lan-card-cta:hover { color: var(--dark); }
+
+  /* ── INDEX HERO ── */
+  .index-hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #025a20 100%);
+    color: #fff;
+    padding: 64px 32px 56px;
+    text-align: center;
+  }
+  .index-hero h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700; letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .index-hero p {
+    font-size: 17px; color: rgba(255,255,255,.65);
+    max-width: 560px; margin: 0 auto 40px;
+  }
+  .index-hero-stats {
+    display: flex; justify-content: center; gap: 48px;
+    flex-wrap: wrap;
+  }
+  .index-hero-stat { text-align: center; }
+  .index-hero-stat-val { font-size: 32px; font-weight: 700; }
+  .index-hero-stat-label { font-size: 12px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark);
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    padding: 28px 32px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  footer a { color: rgba(255,255,255,.7); }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+    <nav>
+      <a class="nav-logo" href="index.html">&#9632;<span>Bostads</span>data</a>
+      <a href="index.html" class="nav-home">Översikt</a>
+      <div class="nav-dropdown" id="navDropdown">
+        <button class="nav-dropdown-btn" onclick="toggleNav()" aria-haspopup="true">
+          Örebro Län<span class="chevron">&#9660;</span>
+        </button>
+        <div class="nav-dropdown-panel" role="menu">
+          <a href="blekinge-lan.html">Blekinge Län</a>
+      <a href="dalarnas-lan.html">Dalarnas Län</a>
+      <a href="gotlands-lan.html">Gotlands Län</a>
+      <a href="gavleborgs-lan.html">Gävleborgs Län</a>
+      <a href="hallands-lan.html">Hallands Län</a>
+      <a href="jamtlands-lan.html">Jämtlands Län</a>
+      <a href="jonkopings-lan.html">Jönköpings Län</a>
+      <a href="kalmar-lan.html">Kalmar Län</a>
+      <a href="kronobergs-lan.html">Kronobergs Län</a>
+      <a href="norrbottens-lan.html">Norrbottens Län</a>
+      <a href="skane-lan.html">Skåne Län</a>
+      <a href="stockholms-lan.html">Stockholms Län</a>
+      <a href="sodermanlands-lan.html">Södermanlands Län</a>
+      <a href="uppsala-lan.html">Uppsala Län</a>
+      <a href="varmlands-lan.html">Värmlands Län</a>
+      <a href="vasterbottens-lan.html">Västerbottens Län</a>
+      <a href="vasternorrlands-lan.html">Västernorrlands Län</a>
+      <a href="vastmanlands-lan.html">Västmanlands Län</a>
+      <a href="vastragotalands-lan.html">Västra Götalands Län</a>
+      <a href="orebro-lan.html" class="active">Örebro Län</a>
+      <a href="ostergotlands-lan.html">Östergötlands Län</a>
+      
+        </div>
+      </div>
+    </nav>
+    <script>
+    function toggleNav() {
+      document.getElementById('navDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var d = document.getElementById('navDropdown');
+      if (d && !d.contains(e.target)) d.classList.remove('open');
+    });
+    </script>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-breadcrumb">
+      <a href="index.html">Översikt</a> &rsaquo; Örebro Län
+    </div>
+    <h1>Bostadsmarknaden i Örebro Län</h1>
+    <p class="hero-subtitle">Mellansverige &middot; Marknadsdata januari 2020 – mars 2026</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-label">Genomsnittspris 2025</div>
+        <div class="hero-stat-value">2,14 Mkr</div>
+        <div class="hero-stat-sub positive">↑ +0,9% jämfört med 2024</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Förändring sedan 2020</div>
+        <div class="hero-stat-value">+13,7%</div>
+        <div class="hero-stat-sub" style="color:rgba(255,255,255,.5)">Från 1,88 Mkr → 2,14 Mkr</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Rekordpris</div>
+        <div class="hero-stat-value">2,64 Mkr</div>
+        <div class="hero-stat-sub negative">Apr 2020 &nbsp;·&nbsp; -17,6% från topp</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Utbud (snitt 2025)</div>
+        <div class="hero-stat-value">2 259</div>
+        <div class="hero-stat-sub positive">↑ +114,5% sedan 2020</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-content">
+
+  <!-- Charts -->
+  <h2 class="section-title">Prisutveckling &amp; utbud i Örebro Län</h2>
+  <div class="type-filter">
+    <button class="type-btn active" onclick="switchChartType('ALL',this)">Alla typer</button>
+    <button class="type-btn" onclick="switchChartType('HOUSE',this)">Villor</button>
+    <button class="type-btn" onclick="switchChartType('APARTMENT',this)">Lägenheter</button>
+    <button class="type-btn" onclick="switchChartType('VACATION_HOME',this)">Fritidshus</button>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Utgångsprisernas utveckling</div>
+      <div class="chart-subtitle">Genomsnittligt utgångspris per månad (kr), alla bostadstyper</div>
+      <div class="chart-container"><canvas id="priceChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Utbudets utveckling</div>
+      <div class="chart-subtitle">Antal annonser på marknaden per månad</div>
+      <div class="chart-container"><canvas id="supplyChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- YoY changes -->
+  <h2 class="section-title">Årsvis prisutveckling i Örebro Län</h2>
+  <div class="yoy-grid">
+    
+        <div class="yoy-card">
+          <div class="yoy-period">2020→2021</div>
+          <div class="yoy-value positive">↑ +6,7%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2021→2022</div>
+          <div class="yoy-value positive">↑ +3,5%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2022→2023</div>
+          <div class="yoy-value positive">↑ +1,8%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2023→2024</div>
+          <div class="yoy-value positive">↑ +0,2%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2024→2025</div>
+          <div class="yoy-value positive">↑ +0,9%</div>
+        </div>
+        <div class="yoy-card">
+          <div class="yoy-period">2025→2026</div>
+          <div class="yoy-value positive">↑ +2,4%</div>
+        </div>
+  </div>
+
+  <!-- Analysis -->
+  <h2 class="section-title">Marknadsanalys – Örebro Län</h2>
+  <div class="analysis-card">
+    
+    <p>Örebro Läns bostadsmarknad har genomgått en prisuppgång om
+    <strong>+13,7%</strong> under perioden 2020–2025, från
+    1,88 Mkr till 2,14 Mkr i genomsnittligt utgångspris.
+    Marknaden nådde sin topp i <strong>Apr 2020</strong> vid 2,64 Mkr,
+    och befinner sig för närvarande -17,6% från den nivån.</p>
+
+    <p>Riksbankens räntehöjningar 2022–2023 dämpade prisutvecklingen med
+    +1,8%, men marknaden har sedan dess återhämtat sig.
+    Under 2025 noterades en prisförändring om <strong>+0,9%</strong>
+    jämfört med 2024 — länet befinner sig i ett stabiliseringsläge och marknaden är balanserad.</p>
+
+    <p>Bland länets kommuner utmärker sig <strong>Askersunds</strong> och <strong>Hallsbergs</strong> samt <strong>Laxå</strong> med den starkaste
+    prisutvecklingen sedan 2020. Utbudet av bostäder har ökat med
+    <strong>+114,5%</strong> sedan 2020, från i snitt
+    1 053 till 2 259 annonser per månad.
+    Det ökade utbudet ger köpare ett brett urval på marknaden.</p>
+    
+  </div>
+
+  <!-- Kommuner ranking table — by type -->
+  <h2 class="section-title">Kommuner med starkast prisutveckling i Örebro Län</h2>
+  
+    <div class="type-filter"><button class="type-btn active" onclick="switchKomTable('orebro','ALL',this)">Alla typer</button><button class="type-btn" onclick="switchKomTable('orebro','HOUSE',this)">Villor</button><button class="type-btn" onclick="switchKomTable('orebro','APARTMENT',this)">Lägenheter</button><button class="type-btn" onclick="switchKomTable('orebro','VACATION_HOME',this)">Fritidshus</button></div>
+    <div class="kom-table-wrap">
+      <table class="kom-table" id="komTable_orebro">
+        <thead>
+          <tr>
+            <th style="cursor:pointer" onclick="sortKomTable('orebro','display')">Kommun ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('orebro','p2020')">Snitt 2020 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('orebro','p2025')">Snitt 2025 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortKomTable('orebro','growth')">Tillväxt ⇅</th>
+          </tr>
+        </thead>
+        <tbody id="komTbody_orebro"></tbody>
+      </table>
+    </div>
+    <script>
+    (function(){
+      const KOM_DATA_OREBRO = {"ALL": [{"display": "Askersunds", "p2020": 1626347, "p2025": 2441040, "growth": 50.1}, {"display": "Hallsbergs", "p2020": 1298610, "p2025": 1872574, "growth": 44.2}, {"display": "Laxå", "p2020": 936292, "p2025": 1255253, "growth": 34.1}, {"display": "Lindesbergs", "p2020": 1193033, "p2025": 1592397, "growth": 33.5}, {"display": "Hällefors", "p2020": 690978, "p2025": 911171, "growth": 31.9}, {"display": "Nora", "p2020": 1394429, "p2025": 1761318, "growth": 26.3}, {"display": "Kumla", "p2020": 1844278, "p2025": 2287590, "growth": 24.0}, {"display": "Ljusnarsbergs", "p2020": 680634, "p2025": 819719, "growth": 20.4}, {"display": "Lekebergs", "p2020": 2087214, "p2025": 2474933, "growth": 18.6}, {"display": "Örebro", "p2020": 2273967, "p2025": 2640400, "growth": 16.1}, {"display": "Degerfors", "p2020": 1013535, "p2025": 850940, "growth": -16.0}, {"display": "Karlskoga", "p2020": 1566479, "p2025": 1036706, "growth": -33.8}], "HOUSE": [{"display": "Askersunds", "p2020": 1451172, "p2025": 2717306, "growth": 87.2}, {"display": "Hällefors", "p2020": 575914, "p2025": 985796, "growth": 71.2}, {"display": "Kumla", "p2020": 2250588, "p2025": 3116939, "growth": 38.5}, {"display": "Lekebergs", "p2020": 2247157, "p2025": 3027318, "growth": 34.7}, {"display": "Ljusnarsbergs", "p2020": 650559, "p2025": 826991, "growth": 27.1}, {"display": "Lindesbergs", "p2020": 1221832, "p2025": 1544780, "growth": 26.4}, {"display": "Hallsbergs", "p2020": 1609604, "p2025": 1980373, "growth": 23.0}, {"display": "Örebro", "p2020": 3528467, "p2025": 4151730, "growth": 17.7}, {"display": "Nora", "p2020": 1665154, "p2025": 1958546, "growth": 17.6}, {"display": "Laxå", "p2020": 1019818, "p2025": 1166752, "growth": 14.4}, {"display": "Karlskoga", "p2020": 1667108, "p2025": 1818130, "growth": 9.1}, {"display": "Degerfors", "p2020": 1111164, "p2025": 1086903, "growth": -2.2}], "APARTMENT": [{"display": "Askersunds", "p2020": 9611, "p2025": 12598, "growth": 31.1}, {"display": "Lindesbergs", "p2020": 7393, "p2025": 8763, "growth": 18.5}, {"display": "Nora", "p2020": 6648, "p2025": 7655, "growth": 15.1}, {"display": "Karlskoga", "p2020": 7175, "p2025": 8171, "growth": 13.9}, {"display": "Örebro", "p2020": 26277, "p2025": 27117, "growth": 3.2}, {"display": "Kumla", "p2020": 14686, "p2025": 14726, "growth": 0.3}, {"display": "Hallsbergs", "p2020": 8091, "p2025": 8067, "growth": -0.3}, {"display": "Lekebergs", "p2020": 12873, "p2025": 12719, "growth": -1.2}, {"display": "Degerfors", "p2020": 4408, "p2025": 4316, "growth": -2.1}, {"display": "Hällefors", "p2020": null, "p2025": null, "growth": null}, {"display": "Laxå", "p2020": null, "p2025": null, "growth": null}, {"display": "Ljusnarsbergs", "p2020": null, "p2025": null, "growth": null}], "VACATION_HOME": [{"display": "Hällefors", "p2020": 551500, "p2025": 1399594, "growth": 153.8}, {"display": "Nora", "p2020": 630952, "p2025": 1060521, "growth": 68.1}, {"display": "Lindesbergs", "p2020": 584249, "p2025": 969333, "growth": 65.9}, {"display": "Ljusnarsbergs", "p2020": 451528, "p2025": 654726, "growth": 45.0}, {"display": "Örebro", "p2020": 627307, "p2025": 785916, "growth": 25.3}, {"display": "Degerfors", "p2020": 605178, "p2025": 723438, "growth": 19.5}, {"display": "Karlskoga", "p2020": 721458, "p2025": 849643, "growth": 17.8}, {"display": "Lekebergs", "p2020": 707500, "p2025": 765000, "growth": 8.1}, {"display": "Askersunds", "p2020": 1219216, "p2025": 1306750, "growth": 7.2}, {"display": "Hallsbergs", "p2020": 909917, "p2025": 926250, "growth": 1.8}, {"display": "Kumla", "p2020": null, "p2025": null, "growth": null}, {"display": "Laxå", "p2020": null, "p2025": null, "growth": null}]};
+      let currentType_orebro = 'ALL';
+      let sortCol_orebro     = 'growth';
+      let sortAsc_orebro     = false;
+
+      function fmtP(v) { return v ? (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2})+' Mkr' : '–'; }
+      function fmtG(v) { return v !== null ? (v>=0?'+':'')+v.toFixed(1).replace('.',',')+'%' : '–'; }
+
+      function renderKomTable_orebro() {
+        const rows = [...KOM_DATA_OREBRO[currentType_orebro]];
+        rows.sort((a,b) => {
+          const av = a[sortCol_orebro], bv = b[sortCol_orebro];
+          if (av === null && bv === null) return 0;
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          if (typeof av === 'string') return sortAsc_orebro ? av.localeCompare(bv,'sv') : bv.localeCompare(av,'sv');
+          return sortAsc_orebro ? av - bv : bv - av;
+        });
+        const tbody = document.getElementById('komTbody_orebro');
+        tbody.innerHTML = rows.map((r,i) => {
+          const rankCls = (i<3 && r.growth!==null) ? 'top' : '';
+          const gCls = r.growth===null ? '' : r.growth>=0 ? 'positive' : 'negative';
+          const rank = r.growth!==null ? `<span class="kom-rank ${rankCls}">${i+1}</span>` : '<span class="kom-rank" style="opacity:.3">–</span>';
+          return `<tr>
+            <td>${rank}${r.display}</td>
+            <td>${fmtP(r.p2020)}</td>
+            <td>${fmtP(r.p2025)}</td>
+            <td class="kom-growth ${gCls}">${fmtG(r.growth)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      window.switchKomTable = function(lan, type, btn) {
+        if (lan !== 'orebro') return;
+        currentType_orebro = type;
+        btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderKomTable_orebro();
+      };
+      window.sortKomTable = function(lan, col) {
+        if (lan !== 'orebro') return;
+        if (sortCol_orebro === col) sortAsc_orebro = !sortAsc_orebro;
+        else { sortCol_orebro = col; sortAsc_orebro = col === 'display'; }
+        renderKomTable_orebro();
+      };
+
+      renderKomTable_orebro();
+    })();
+    </script>
+
+  <!-- Kommuner ranking table — by rooms -->
+  <h2 class="section-title">Prisutveckling per antal rum i Örebro Län</h2>
+  
+    <div class="type-filter"><button class="type-btn active" onclick="switchRoomTable('orebro','ALL',this)">Alla storlekar</button><button class="type-btn" onclick="switchRoomTable('orebro','ROOM_1',this)">1 rum</button><button class="type-btn" onclick="switchRoomTable('orebro','ROOM_2',this)">2 rum</button><button class="type-btn" onclick="switchRoomTable('orebro','ROOM_3',this)">3 rum</button><button class="type-btn" onclick="switchRoomTable('orebro','ROOM_4',this)">4 rum</button><button class="type-btn" onclick="switchRoomTable('orebro','ROOM_5',this)">5+ rum</button></div>
+    <div class="kom-table-wrap">
+      <table class="kom-table" id="roomTable_orebro">
+        <thead>
+          <tr>
+            <th style="cursor:pointer" onclick="sortRoomTable('orebro','display')">Kommun ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('orebro','p2020')">Snitt 2020 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('orebro','p2025')">Snitt 2025 ⇅</th>
+            <th style="cursor:pointer;text-align:right" onclick="sortRoomTable('orebro','growth')">Tillväxt ⇅</th>
+          </tr>
+        </thead>
+        <tbody id="roomTbody_orebro"></tbody>
+      </table>
+    </div>
+    <script>
+    (function(){
+      const ROOM_DATA_OREBRO = {"ALL": [{"display": "Askersunds", "p2020": 1626347, "p2025": 2441040, "growth": 50.1}, {"display": "Hallsbergs", "p2020": 1298610, "p2025": 1872574, "growth": 44.2}, {"display": "Laxå", "p2020": 936292, "p2025": 1255253, "growth": 34.1}, {"display": "Lindesbergs", "p2020": 1193033, "p2025": 1592397, "growth": 33.5}, {"display": "Hällefors", "p2020": 690978, "p2025": 911171, "growth": 31.9}, {"display": "Nora", "p2020": 1394429, "p2025": 1761318, "growth": 26.3}, {"display": "Kumla", "p2020": 1844278, "p2025": 2287590, "growth": 24.0}, {"display": "Ljusnarsbergs", "p2020": 680634, "p2025": 819719, "growth": 20.4}, {"display": "Lekebergs", "p2020": 2087214, "p2025": 2474933, "growth": 18.6}, {"display": "Örebro", "p2020": 2273967, "p2025": 2640400, "growth": 16.1}, {"display": "Degerfors", "p2020": 1013535, "p2025": 850940, "growth": -16.0}, {"display": "Karlskoga", "p2020": 1566479, "p2025": 1036706, "growth": -33.8}], "ROOM_1": [{"display": "Hällefors", "p2020": 226800, "p2025": 288750, "growth": 27.3}, {"display": "Karlskoga", "p2020": 191953, "p2025": 208900, "growth": 8.8}, {"display": "Lindesbergs", "p2020": 260250, "p2025": 277083, "growth": 6.5}, {"display": "Örebro", "p2020": 1175608, "p2025": 1127248, "growth": -4.1}, {"display": "Kumla", "p2020": 464677, "p2025": 367656, "growth": -20.9}, {"display": "Hallsbergs", "p2020": 510500, "p2025": 318750, "growth": -37.6}, {"display": "Askersunds", "p2020": null, "p2025": null, "growth": null}, {"display": "Degerfors", "p2020": null, "p2025": null, "growth": null}, {"display": "Laxå", "p2020": null, "p2025": null, "growth": null}, {"display": "Lekebergs", "p2020": null, "p2025": null, "growth": null}, {"display": "Ljusnarsbergs", "p2020": null, "p2025": null, "growth": null}, {"display": "Nora", "p2020": null, "p2025": null, "growth": null}], "ROOM_2": [{"display": "Lekebergs", "p2020": 488542, "p2025": 1068750, "growth": 118.8}, {"display": "Nora", "p2020": 326157, "p2025": 597424, "growth": 83.2}, {"display": "Laxå", "p2020": 490500, "p2025": 847500, "growth": 72.8}, {"display": "Hallsbergs", "p2020": 633485, "p2025": 812865, "growth": 28.3}, {"display": "Lindesbergs", "p2020": 484935, "p2025": 619722, "growth": 27.8}, {"display": "Kumla", "p2020": 830212, "p2025": 939132, "growth": 13.1}, {"display": "Karlskoga", "p2020": 419363, "p2025": 467431, "growth": 11.5}, {"display": "Örebro", "p2020": 1523434, "p2025": 1531131, "growth": 0.5}, {"display": "Degerfors", "p2020": 320833, "p2025": 305530, "growth": -4.8}, {"display": "Hällefors", "p2020": 853000, "p2025": 696510, "growth": -18.3}, {"display": "Askersunds", "p2020": 1500153, "p2025": 873833, "growth": -41.8}, {"display": "Ljusnarsbergs", "p2020": null, "p2025": null, "growth": null}], "ROOM_3": [{"display": "Hällefors", "p2020": 430476, "p2025": 1015278, "growth": 135.8}, {"display": "Lekebergs", "p2020": 840370, "p2025": 1389282, "growth": 65.3}, {"display": "Hallsbergs", "p2020": 890069, "p2025": 1290800, "growth": 45.0}, {"display": "Ljusnarsbergs", "p2020": 615606, "p2025": 726343, "growth": 18.0}, {"display": "Nora", "p2020": 883035, "p2025": 1038886, "growth": 17.6}, {"display": "Lindesbergs", "p2020": 855818, "p2025": 931893, "growth": 8.9}, {"display": "Degerfors", "p2020": 605250, "p2025": 653194, "growth": 7.9}, {"display": "Örebro", "p2020": 1891084, "p2025": 2019449, "growth": 6.8}, {"display": "Karlskoga", "p2020": 798230, "p2025": 849193, "growth": 6.4}, {"display": "Kumla", "p2020": 1401347, "p2025": 1342153, "growth": -4.2}, {"display": "Askersunds", "p2020": 1156183, "p2025": 1106259, "growth": -4.3}, {"display": "Laxå", "p2020": 1015714, "p2025": 814688, "growth": -19.8}], "ROOM_4": [{"display": "Askersunds", "p2020": 1149974, "p2025": 2264015, "growth": 96.9}, {"display": "Hällefors", "p2020": 452130, "p2025": 850521, "growth": 88.1}, {"display": "Lekebergs", "p2020": 1595458, "p2025": 2267273, "growth": 42.1}, {"display": "Degerfors", "p2020": 704129, "p2025": 938068, "growth": 33.2}, {"display": "Lindesbergs", "p2020": 1078794, "p2025": 1372592, "growth": 27.2}, {"display": "Kumla", "p2020": 1738552, "p2025": 2167849, "growth": 24.7}, {"display": "Hallsbergs", "p2020": 1391958, "p2025": 1648929, "growth": 18.5}, {"display": "Nora", "p2020": 1397604, "p2025": 1643125, "growth": 17.6}, {"display": "Örebro", "p2020": 2513224, "p2025": 2822243, "growth": 12.3}, {"display": "Laxå", "p2020": 859097, "p2025": 936759, "growth": 9.0}, {"display": "Karlskoga", "p2020": 1299643, "p2025": 1375006, "growth": 5.8}, {"display": "Ljusnarsbergs", "p2020": 629500, "p2025": 589593, "growth": -6.3}], "ROOM_5": [{"display": "Lindesbergs", "p2020": 1155910, "p2025": 2112702, "growth": 82.8}, {"display": "Ljusnarsbergs", "p2020": 602000, "p2025": 1036481, "growth": 72.2}, {"display": "Hällefors", "p2020": 578929, "p2025": 898542, "growth": 55.2}, {"display": "Kumla", "p2020": 2267479, "p2025": 3287364, "growth": 45.0}, {"display": "Nora", "p2020": 1471136, "p2025": 2016389, "growth": 37.1}, {"display": "Hallsbergs", "p2020": 1556680, "p2025": 2079167, "growth": 33.6}, {"display": "Lekebergs", "p2020": 2073300, "p2025": 2388018, "growth": 15.2}, {"display": "Örebro", "p2020": 3193896, "p2025": 3669112, "growth": 14.9}, {"display": "Laxå", "p2020": 1026940, "p2025": 1150250, "growth": 12.0}, {"display": "Askersunds", "p2020": 2393167, "p2025": 2200076, "growth": -8.1}, {"display": "Degerfors", "p2020": 1120883, "p2025": 1016856, "growth": -9.3}, {"display": "Karlskoga", "p2020": 1923343, "p2025": 1554308, "growth": -19.2}]};
+      let currentRoom_room_orebro = 'ALL';
+      let sortCol_room_orebro     = 'growth';
+      let sortAsc_room_orebro     = false;
+
+      function fmtP(v) { return v ? (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2})+' Mkr' : '–'; }
+      function fmtG(v) { return v !== null ? (v>=0?'+':'')+v.toFixed(1).replace('.',',')+' %' : '–'; }
+
+      function renderRoomTable_room_orebro() {
+        const rows = [...ROOM_DATA_OREBRO[currentRoom_room_orebro]];
+        rows.sort((a,b) => {
+          const av = a[sortCol_room_orebro], bv = b[sortCol_room_orebro];
+          if (av === null && bv === null) return 0;
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          if (typeof av === 'string') return sortAsc_room_orebro ? av.localeCompare(bv,'sv') : bv.localeCompare(av,'sv');
+          return sortAsc_room_orebro ? av - bv : bv - av;
+        });
+        const tbody = document.getElementById('roomTbody_orebro');
+        tbody.innerHTML = rows.map((r,i) => {
+          const rankCls = (i<3 && r.growth!==null) ? 'top' : '';
+          const gCls = r.growth===null ? '' : r.growth>=0 ? 'positive' : 'negative';
+          const rank = r.growth!==null
+            ? `<span class="kom-rank ${rankCls}">${i+1}</span>`
+            : '<span class="kom-rank" style="opacity:.3">–</span>';
+          return `<tr>
+            <td>${rank}${r.display}</td>
+            <td>${fmtP(r.p2020)}</td>
+            <td>${fmtP(r.p2025)}</td>
+            <td class="kom-growth ${gCls}">${fmtG(r.growth)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      window.switchRoomTable = function(lan, room, btn) {
+        if (lan !== 'orebro') return;
+        currentRoom_room_orebro = room;
+        btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderRoomTable_room_orebro();
+      };
+      window.sortRoomTable = function(lan, col) {
+        if (lan !== 'orebro') return;
+        if (sortCol_room_orebro === col) sortAsc_room_orebro = !sortAsc_room_orebro;
+        else { sortCol_room_orebro = col; sortAsc_room_orebro = col === 'display'; }
+        renderRoomTable_room_orebro();
+      };
+
+      renderRoomTable_room_orebro();
+    })();
+    </script>
+
+
+</div>
+
+<script>
+(function() {
+  const priceLabels  = ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+  const priceValues  = [1612411, 1835186, 1899250, 2642862, 1887167, 1682141, 1573420, 1702519, 1877770, 1830769, 2058639, 1956678, 2029943, 1837285, 2077313, 1759334, 1955692, 2000732, 1793771, 1912798, 2158024, 2093050, 2329862, 2122183, 2108046, 2082517, 2054336, 2075480, 2101856, 2001021, 1963533, 2089286, 2433080, 2219668, 1902192, 1876324, 2135627, 2226863, 2180116, 2085754, 2411963, 2050897, 2130197, 1959571, 2246090, 1902316, 1854721, 2175842, 2144830, 1979721, 2174723, 2041273, 2160447, 2159720, 1934585, 2276390, 2315879, 2098157, 2092425, 2042846, 2059961, 2008450, 2151203, 2226258, 2072175, 2056027, 2063255, 2194404, 2454145, 2196708, 2151360, 2004935, 2062184, 2093682, 1962534, 2641285, 2178722];
+  const supplyLabels = ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+  const supplyValues = [934, 1012, 1150, 1253, 1238, 1196, 1014, 1037, 1104, 1055, 904, 743, 745, 832, 948, 1034, 1199, 1232, 999, 1117, 1214, 1122, 982, 809, 811, 902, 1013, 1056, 1320, 1349, 1199, 1363, 1541, 1482, 1402, 1205, 1200, 1258, 1367, 1404, 1633, 1718, 1608, 1790, 1861, 1873, 1781, 1593, 1672, 1740, 1892, 1969, 2168, 2234, 2179, 2346, 2360, 2223, 2127, 1936, 1984, 2047, 2166, 2335, 2461, 2419, 2324, 2433, 2408, 2376, 2180, 1983, 1939, 1959, 2046, 2241, 2307];
+
+  function fmtPrice(v) {
+    return (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Mkr';
+  }
+  function fmtCount(v) {
+    return v.toLocaleString('sv-SE') + ' annonser';
+  }
+  function showYearTick(label) {
+    return label && label.endsWith('-01');
+  }
+  function yearLabel(label) {
+    return label ? label.substring(0,4) : '';
+  }
+
+  const gridColor  = 'rgba(1,58,20,.07)';
+  const labelColor = '#5a6a5e';
+  const baseFont   = { family: 'Roboto', size: 11 };
+
+  // ── Price chart ──────────────────────────────────────────────────────────
+  const priceCtx = document.getElementById('priceChart').getContext('2d');
+  const priceGrad = priceCtx.createLinearGradient(0, 0, 0, 260);
+  priceGrad.addColorStop(0, 'rgba(0,126,71,.25)');
+  priceGrad.addColorStop(1, 'rgba(0,126,71,.0)');
+
+  const priceChart = new Chart(priceCtx, {
+    type: 'line',
+    data: {
+      labels: priceLabels,
+      datasets: [{
+        data: priceValues,
+        borderColor: '#007e47',
+        backgroundColor: priceGrad,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#007e47',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#013a14',
+          titleFont: { ...baseFont, size: 12, weight: '700' },
+          bodyFont: baseFont,
+          padding: 12,
+          callbacks: {
+            title: ctx => { const l = ctx[0].label; return l ? l.substring(0,4) + ' ' + new Date(l+'-01').toLocaleString('sv-SE',{month:'short'}) : ''; },
+            label: ctx => ' ' + fmtPrice(ctx.raw),
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: function(val, idx) {
+              return showYearTick(priceLabels[idx]) ? yearLabel(priceLabels[idx]) : '';
+            },
+            maxRotation: 0,
+          },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: v => (v/1e6).toLocaleString('sv-SE',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' Mkr',
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+
+  // ── Supply chart ─────────────────────────────────────────────────────────
+  const supplyCtx = document.getElementById('supplyChart').getContext('2d');
+  const supplyGrad = supplyCtx.createLinearGradient(0, 0, 0, 260);
+  supplyGrad.addColorStop(0, 'rgba(1,58,20,.20)');
+  supplyGrad.addColorStop(1, 'rgba(1,58,20,.0)');
+
+  const supplyChart = new Chart(supplyCtx, {
+    type: 'line',
+    data: {
+      labels: supplyLabels,
+      datasets: [{
+        data: supplyValues,
+        borderColor: '#013a14',
+        backgroundColor: supplyGrad,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#013a14',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#013a14',
+          titleFont: { ...baseFont, size: 12, weight: '700' },
+          bodyFont: baseFont,
+          padding: 12,
+          callbacks: {
+            title: ctx => { const l = ctx[0].label; return l ? l.substring(0,4) + ' ' + new Date(l+'-01').toLocaleString('sv-SE',{month:'short'}) : ''; },
+            label: ctx => ' ' + fmtCount(ctx.raw),
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: function(val, idx) {
+              return showYearTick(supplyLabels[idx]) ? yearLabel(supplyLabels[idx]) : '';
+            },
+            maxRotation: 0,
+          },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: labelColor, font: baseFont,
+            callback: v => v.toLocaleString('sv-SE'),
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+
+  // ── Type switching ───────────────────────────────────────────────────────
+  const typeData = {"ALL": {"price": [{"x": "2020-01", "y": 1612411}, {"x": "2020-02", "y": 1835186}, {"x": "2020-03", "y": 1899250}, {"x": "2020-04", "y": 2642862}, {"x": "2020-05", "y": 1887167}, {"x": "2020-06", "y": 1682141}, {"x": "2020-07", "y": 1573420}, {"x": "2020-08", "y": 1702519}, {"x": "2020-09", "y": 1877770}, {"x": "2020-10", "y": 1830769}, {"x": "2020-11", "y": 2058639}, {"x": "2020-12", "y": 1956678}, {"x": "2021-01", "y": 2029943}, {"x": "2021-02", "y": 1837285}, {"x": "2021-03", "y": 2077313}, {"x": "2021-04", "y": 1759334}, {"x": "2021-05", "y": 1955692}, {"x": "2021-06", "y": 2000732}, {"x": "2021-07", "y": 1793771}, {"x": "2021-08", "y": 1912798}, {"x": "2021-09", "y": 2158024}, {"x": "2021-10", "y": 2093050}, {"x": "2021-11", "y": 2329862}, {"x": "2021-12", "y": 2122183}, {"x": "2022-01", "y": 2108046}, {"x": "2022-02", "y": 2082517}, {"x": "2022-03", "y": 2054336}, {"x": "2022-04", "y": 2075480}, {"x": "2022-05", "y": 2101856}, {"x": "2022-06", "y": 2001021}, {"x": "2022-07", "y": 1963533}, {"x": "2022-08", "y": 2089286}, {"x": "2022-09", "y": 2433080}, {"x": "2022-10", "y": 2219668}, {"x": "2022-11", "y": 1902192}, {"x": "2022-12", "y": 1876324}, {"x": "2023-01", "y": 2135627}, {"x": "2023-02", "y": 2226863}, {"x": "2023-03", "y": 2180116}, {"x": "2023-04", "y": 2085754}, {"x": "2023-05", "y": 2411963}, {"x": "2023-06", "y": 2050897}, {"x": "2023-07", "y": 2130197}, {"x": "2023-08", "y": 1959571}, {"x": "2023-09", "y": 2246090}, {"x": "2023-10", "y": 1902316}, {"x": "2023-11", "y": 1854721}, {"x": "2023-12", "y": 2175842}, {"x": "2024-01", "y": 2144830}, {"x": "2024-02", "y": 1979721}, {"x": "2024-03", "y": 2174723}, {"x": "2024-04", "y": 2041273}, {"x": "2024-05", "y": 2160447}, {"x": "2024-06", "y": 2159720}, {"x": "2024-07", "y": 1934585}, {"x": "2024-08", "y": 2276390}, {"x": "2024-09", "y": 2315879}, {"x": "2024-10", "y": 2098157}, {"x": "2024-11", "y": 2092425}, {"x": "2024-12", "y": 2042846}, {"x": "2025-01", "y": 2059961}, {"x": "2025-02", "y": 2008450}, {"x": "2025-03", "y": 2151203}, {"x": "2025-04", "y": 2226258}, {"x": "2025-05", "y": 2072175}, {"x": "2025-06", "y": 2056027}, {"x": "2025-07", "y": 2063255}, {"x": "2025-08", "y": 2194404}, {"x": "2025-09", "y": 2454145}, {"x": "2025-10", "y": 2196708}, {"x": "2025-11", "y": 2151360}, {"x": "2025-12", "y": 2004935}, {"x": "2026-01", "y": 2062184}, {"x": "2026-02", "y": 2093682}, {"x": "2026-03", "y": 1962534}, {"x": "2026-04", "y": 2641285}, {"x": "2026-05", "y": 2178722}], "supply": [{"x": "2020-01", "y": 934}, {"x": "2020-02", "y": 1012}, {"x": "2020-03", "y": 1150}, {"x": "2020-04", "y": 1253}, {"x": "2020-05", "y": 1238}, {"x": "2020-06", "y": 1196}, {"x": "2020-07", "y": 1014}, {"x": "2020-08", "y": 1037}, {"x": "2020-09", "y": 1104}, {"x": "2020-10", "y": 1055}, {"x": "2020-11", "y": 904}, {"x": "2020-12", "y": 743}, {"x": "2021-01", "y": 745}, {"x": "2021-02", "y": 832}, {"x": "2021-03", "y": 948}, {"x": "2021-04", "y": 1034}, {"x": "2021-05", "y": 1199}, {"x": "2021-06", "y": 1232}, {"x": "2021-07", "y": 999}, {"x": "2021-08", "y": 1117}, {"x": "2021-09", "y": 1214}, {"x": "2021-10", "y": 1122}, {"x": "2021-11", "y": 982}, {"x": "2021-12", "y": 809}, {"x": "2022-01", "y": 811}, {"x": "2022-02", "y": 902}, {"x": "2022-03", "y": 1013}, {"x": "2022-04", "y": 1056}, {"x": "2022-05", "y": 1320}, {"x": "2022-06", "y": 1349}, {"x": "2022-07", "y": 1199}, {"x": "2022-08", "y": 1363}, {"x": "2022-09", "y": 1541}, {"x": "2022-10", "y": 1482}, {"x": "2022-11", "y": 1402}, {"x": "2022-12", "y": 1205}, {"x": "2023-01", "y": 1200}, {"x": "2023-02", "y": 1258}, {"x": "2023-03", "y": 1367}, {"x": "2023-04", "y": 1404}, {"x": "2023-05", "y": 1633}, {"x": "2023-06", "y": 1718}, {"x": "2023-07", "y": 1608}, {"x": "2023-08", "y": 1790}, {"x": "2023-09", "y": 1861}, {"x": "2023-10", "y": 1873}, {"x": "2023-11", "y": 1781}, {"x": "2023-12", "y": 1593}, {"x": "2024-01", "y": 1672}, {"x": "2024-02", "y": 1740}, {"x": "2024-03", "y": 1892}, {"x": "2024-04", "y": 1969}, {"x": "2024-05", "y": 2168}, {"x": "2024-06", "y": 2234}, {"x": "2024-07", "y": 2179}, {"x": "2024-08", "y": 2346}, {"x": "2024-09", "y": 2360}, {"x": "2024-10", "y": 2223}, {"x": "2024-11", "y": 2127}, {"x": "2024-12", "y": 1936}, {"x": "2025-01", "y": 1984}, {"x": "2025-02", "y": 2047}, {"x": "2025-03", "y": 2166}, {"x": "2025-04", "y": 2335}, {"x": "2025-05", "y": 2461}, {"x": "2025-06", "y": 2419}, {"x": "2025-07", "y": 2324}, {"x": "2025-08", "y": 2433}, {"x": "2025-09", "y": 2408}, {"x": "2025-10", "y": 2376}, {"x": "2025-11", "y": 2180}, {"x": "2025-12", "y": 1983}, {"x": "2026-01", "y": 1939}, {"x": "2026-02", "y": 1959}, {"x": "2026-03", "y": 2046}, {"x": "2026-04", "y": 2241}, {"x": "2026-05", "y": 2307}]}, "HOUSE": {"price": [{"x": "2020-01", "y": 2129268}, {"x": "2020-02", "y": 2278083}, {"x": "2020-03", "y": 2224606}, {"x": "2020-04", "y": 1964862}, {"x": "2020-05", "y": 2178110}, {"x": "2020-06", "y": 2111078}, {"x": "2020-07", "y": 2130490}, {"x": "2020-08", "y": 2149586}, {"x": "2020-09", "y": 2266065}, {"x": "2020-10", "y": 2260123}, {"x": "2020-11", "y": 2409417}, {"x": "2020-12", "y": 2442474}, {"x": "2021-01", "y": 2461882}, {"x": "2021-02", "y": 2208362}, {"x": "2021-03", "y": 2297107}, {"x": "2021-04", "y": 2121051}, {"x": "2021-05", "y": 2531754}, {"x": "2021-06", "y": 2362488}, {"x": "2021-07", "y": 2208563}, {"x": "2021-08", "y": 2421747}, {"x": "2021-09", "y": 2725050}, {"x": "2021-10", "y": 2625696}, {"x": "2021-11", "y": 2888916}, {"x": "2021-12", "y": 2692606}, {"x": "2022-01", "y": 2638559}, {"x": "2022-02", "y": 2834696}, {"x": "2022-03", "y": 2432429}, {"x": "2022-04", "y": 2603420}, {"x": "2022-05", "y": 2696502}, {"x": "2022-06", "y": 2506487}, {"x": "2022-07", "y": 2501549}, {"x": "2022-08", "y": 2719356}, {"x": "2022-09", "y": 3095678}, {"x": "2022-10", "y": 2827785}, {"x": "2022-11", "y": 2301072}, {"x": "2022-12", "y": 2504317}, {"x": "2023-01", "y": 2642151}, {"x": "2023-02", "y": 2515861}, {"x": "2023-03", "y": 2672391}, {"x": "2023-04", "y": 2516390}, {"x": "2023-05", "y": 2371422}, {"x": "2023-06", "y": 2574332}, {"x": "2023-07", "y": 2353198}, {"x": "2023-08", "y": 2375249}, {"x": "2023-09", "y": 2660290}, {"x": "2023-10", "y": 2304514}, {"x": "2023-11", "y": 2437627}, {"x": "2023-12", "y": 3108667}, {"x": "2024-01", "y": 2563287}, {"x": "2024-02", "y": 2614370}, {"x": "2024-03", "y": 2810967}, {"x": "2024-04", "y": 2243324}, {"x": "2024-05", "y": 2710531}, {"x": "2024-06", "y": 2664501}, {"x": "2024-07", "y": 2479699}, {"x": "2024-08", "y": 2728625}, {"x": "2024-09", "y": 2779413}, {"x": "2024-10", "y": 2505184}, {"x": "2024-11", "y": 2750419}, {"x": "2024-12", "y": 2722500}, {"x": "2025-01", "y": 2700526}, {"x": "2025-02", "y": 2694554}, {"x": "2025-03", "y": 2918112}, {"x": "2025-04", "y": 2638827}, {"x": "2025-05", "y": 2534311}, {"x": "2025-06", "y": 2619578}, {"x": "2025-07", "y": 2517033}, {"x": "2025-08", "y": 2783897}, {"x": "2025-09", "y": 2944144}, {"x": "2025-10", "y": 2665472}, {"x": "2025-11", "y": 2890660}, {"x": "2025-12", "y": 2937143}, {"x": "2026-01", "y": 2993000}, {"x": "2026-02", "y": 2680783}, {"x": "2026-03", "y": 2367684}, {"x": "2026-04", "y": 2730824}, {"x": "2026-05", "y": 2582845}], "supply": [{"x": "2020-01", "y": 266}, {"x": "2020-02", "y": 313}, {"x": "2020-03", "y": 364}, {"x": "2020-04", "y": 422}, {"x": "2020-05", "y": 439}, {"x": "2020-06", "y": 405}, {"x": "2020-07", "y": 300}, {"x": "2020-08", "y": 349}, {"x": "2020-09", "y": 372}, {"x": "2020-10", "y": 353}, {"x": "2020-11", "y": 323}, {"x": "2020-12", "y": 238}, {"x": "2021-01", "y": 236}, {"x": "2021-02", "y": 271}, {"x": "2021-03", "y": 328}, {"x": "2021-04", "y": 363}, {"x": "2021-05", "y": 428}, {"x": "2021-06", "y": 444}, {"x": "2021-07", "y": 360}, {"x": "2021-08", "y": 403}, {"x": "2021-09", "y": 449}, {"x": "2021-10", "y": 404}, {"x": "2021-11", "y": 321}, {"x": "2021-12", "y": 247}, {"x": "2022-01", "y": 269}, {"x": "2022-02", "y": 318}, {"x": "2022-03", "y": 381}, {"x": "2022-04", "y": 405}, {"x": "2022-05", "y": 504}, {"x": "2022-06", "y": 518}, {"x": "2022-07", "y": 422}, {"x": "2022-08", "y": 488}, {"x": "2022-09", "y": 604}, {"x": "2022-10", "y": 586}, {"x": "2022-11", "y": 539}, {"x": "2022-12", "y": 439}, {"x": "2023-01", "y": 428}, {"x": "2023-02", "y": 472}, {"x": "2023-03", "y": 518}, {"x": "2023-04", "y": 549}, {"x": "2023-05", "y": 667}, {"x": "2023-06", "y": 705}, {"x": "2023-07", "y": 635}, {"x": "2023-08", "y": 698}, {"x": "2023-09", "y": 735}, {"x": "2023-10", "y": 732}, {"x": "2023-11", "y": 698}, {"x": "2023-12", "y": 588}, {"x": "2024-01", "y": 622}, {"x": "2024-02", "y": 649}, {"x": "2024-03", "y": 728}, {"x": "2024-04", "y": 778}, {"x": "2024-05", "y": 896}, {"x": "2024-06", "y": 932}, {"x": "2024-07", "y": 889}, {"x": "2024-08", "y": 938}, {"x": "2024-09", "y": 958}, {"x": "2024-10", "y": 902}, {"x": "2024-11", "y": 844}, {"x": "2024-12", "y": 753}, {"x": "2025-01", "y": 753}, {"x": "2025-02", "y": 785}, {"x": "2025-03", "y": 813}, {"x": "2025-04", "y": 873}, {"x": "2025-05", "y": 964}, {"x": "2025-06", "y": 936}, {"x": "2025-07", "y": 882}, {"x": "2025-08", "y": 905}, {"x": "2025-09", "y": 931}, {"x": "2025-10", "y": 875}, {"x": "2025-11", "y": 794}, {"x": "2025-12", "y": 693}, {"x": "2026-01", "y": 661}, {"x": "2026-02", "y": 665}, {"x": "2026-03", "y": 685}, {"x": "2026-04", "y": 791}, {"x": "2026-05", "y": 821}]}, "APARTMENT": {"price": [{"x": "2020-01", "y": 18684}, {"x": "2020-02", "y": 19912}, {"x": "2020-03", "y": 21710}, {"x": "2020-04", "y": 20026}, {"x": "2020-05", "y": 22008}, {"x": "2020-06", "y": 21047}, {"x": "2020-07", "y": 21305}, {"x": "2020-08", "y": 20081}, {"x": "2020-09", "y": 20004}, {"x": "2020-10", "y": 20041}, {"x": "2020-11", "y": 20172}, {"x": "2020-12", "y": 22763}, {"x": "2021-01", "y": 22207}, {"x": "2021-02", "y": 21623}, {"x": "2021-03", "y": 20918}, {"x": "2021-04", "y": 21448}, {"x": "2021-05", "y": 20657}, {"x": "2021-06", "y": 22541}, {"x": "2021-07", "y": 21736}, {"x": "2021-08", "y": 20891}, {"x": "2021-09", "y": 20641}, {"x": "2021-10", "y": 21692}, {"x": "2021-11", "y": 21167}, {"x": "2021-12", "y": 24725}, {"x": "2022-01", "y": 21477}, {"x": "2022-02", "y": 22025}, {"x": "2022-03", "y": 22154}, {"x": "2022-04", "y": 23061}, {"x": "2022-05", "y": 22601}, {"x": "2022-06", "y": 21968}, {"x": "2022-07", "y": 25731}, {"x": "2022-08", "y": 20427}, {"x": "2022-09", "y": 21679}, {"x": "2022-10", "y": 20245}, {"x": "2022-11", "y": 20987}, {"x": "2022-12", "y": 19787}, {"x": "2023-01", "y": 20680}, {"x": "2023-02", "y": 21053}, {"x": "2023-03", "y": 21544}, {"x": "2023-04", "y": 20899}, {"x": "2023-05", "y": 23386}, {"x": "2023-06", "y": 22999}, {"x": "2023-07", "y": 22268}, {"x": "2023-08", "y": 22281}, {"x": "2023-09", "y": 21256}, {"x": "2023-10", "y": 19880}, {"x": "2023-11", "y": 20783}, {"x": "2023-12", "y": 23573}, {"x": "2024-01", "y": 22260}, {"x": "2024-02", "y": 20048}, {"x": "2024-03", "y": 20926}, {"x": "2024-04", "y": 19862}, {"x": "2024-05", "y": 22838}, {"x": "2024-06", "y": 23345}, {"x": "2024-07", "y": 23253}, {"x": "2024-08", "y": 22855}, {"x": "2024-09", "y": 22439}, {"x": "2024-10", "y": 20814}, {"x": "2024-11", "y": 20843}, {"x": "2024-12", "y": 20901}, {"x": "2025-01", "y": 19705}, {"x": "2025-02", "y": 22336}, {"x": "2025-03", "y": 21478}, {"x": "2025-04", "y": 24413}, {"x": "2025-05", "y": 21461}, {"x": "2025-06", "y": 21561}, {"x": "2025-07", "y": 22348}, {"x": "2025-08", "y": 21757}, {"x": "2025-09", "y": 22479}, {"x": "2025-10", "y": 21521}, {"x": "2025-11", "y": 19958}, {"x": "2025-12", "y": 19633}, {"x": "2026-01", "y": 20521}, {"x": "2026-02", "y": 23033}, {"x": "2026-03", "y": 22387}, {"x": "2026-04", "y": 22499}, {"x": "2026-05", "y": 22827}], "supply": [{"x": "2020-01", "y": 449}, {"x": "2020-02", "y": 470}, {"x": "2020-03", "y": 522}, {"x": "2020-04", "y": 513}, {"x": "2020-05", "y": 498}, {"x": "2020-06", "y": 493}, {"x": "2020-07", "y": 456}, {"x": "2020-08", "y": 439}, {"x": "2020-09", "y": 472}, {"x": "2020-10", "y": 448}, {"x": "2020-11", "y": 370}, {"x": "2020-12", "y": 321}, {"x": "2021-01", "y": 336}, {"x": "2021-02", "y": 377}, {"x": "2021-03", "y": 407}, {"x": "2021-04", "y": 426}, {"x": "2021-05", "y": 433}, {"x": "2021-06", "y": 446}, {"x": "2021-07", "y": 365}, {"x": "2021-08", "y": 421}, {"x": "2021-09", "y": 448}, {"x": "2021-10", "y": 442}, {"x": "2021-11", "y": 400}, {"x": "2021-12", "y": 345}, {"x": "2022-01", "y": 341}, {"x": "2022-02", "y": 351}, {"x": "2022-03", "y": 379}, {"x": "2022-04", "y": 374}, {"x": "2022-05", "y": 458}, {"x": "2022-06", "y": 461}, {"x": "2022-07", "y": 456}, {"x": "2022-08", "y": 538}, {"x": "2022-09", "y": 542}, {"x": "2022-10", "y": 514}, {"x": "2022-11", "y": 495}, {"x": "2022-12", "y": 444}, {"x": "2023-01", "y": 466}, {"x": "2023-02", "y": 476}, {"x": "2023-03", "y": 531}, {"x": "2023-04", "y": 519}, {"x": "2023-05", "y": 566}, {"x": "2023-06", "y": 592}, {"x": "2023-07", "y": 574}, {"x": "2023-08", "y": 642}, {"x": "2023-09", "y": 655}, {"x": "2023-10", "y": 669}, {"x": "2023-11", "y": 627}, {"x": "2023-12", "y": 601}, {"x": "2024-01", "y": 628}, {"x": "2024-02", "y": 657}, {"x": "2024-03", "y": 712}, {"x": "2024-04", "y": 699}, {"x": "2024-05", "y": 715}, {"x": "2024-06", "y": 725}, {"x": "2024-07", "y": 715}, {"x": "2024-08", "y": 807}, {"x": "2024-09", "y": 814}, {"x": "2024-10", "y": 795}, {"x": "2024-11", "y": 794}, {"x": "2024-12", "y": 738}, {"x": "2025-01", "y": 790}, {"x": "2025-02", "y": 813}, {"x": "2025-03", "y": 871}, {"x": "2025-04", "y": 925}, {"x": "2025-05", "y": 939}, {"x": "2025-06", "y": 933}, {"x": "2025-07", "y": 923}, {"x": "2025-08", "y": 979}, {"x": "2025-09", "y": 948}, {"x": "2025-10", "y": 960}, {"x": "2025-11", "y": 895}, {"x": "2025-12", "y": 834}, {"x": "2026-01", "y": 840}, {"x": "2026-02", "y": 868}, {"x": "2026-03", "y": 903}, {"x": "2026-04", "y": 950}, {"x": "2026-05", "y": 963}]}, "VACATION_HOME": {"price": [{"x": "2020-01", "y": 748000}, {"x": "2020-02", "y": 824167}, {"x": "2020-03", "y": 1050556}, {"x": "2020-04", "y": 925581}, {"x": "2020-05", "y": 669167}, {"x": "2020-06", "y": 629894}, {"x": "2020-07", "y": 523913}, {"x": "2020-08", "y": 710217}, {"x": "2020-09", "y": 775000}, {"x": "2020-10", "y": 337000}, {"x": "2020-11", "y": 330000}, {"x": "2020-12", "y": 495000}, {"x": "2021-01", "y": 150000}, {"x": "2021-02", "y": 575833}, {"x": "2021-03", "y": 949348}, {"x": "2021-04", "y": 822206}, {"x": "2021-05", "y": 866316}, {"x": "2021-06", "y": 1045917}, {"x": "2021-07", "y": 635357}, {"x": "2021-08", "y": 961688}, {"x": "2021-09", "y": 955476}, {"x": "2021-10", "y": 902857}, {"x": "2021-11", "y": 795000}, {"x": "2021-12", "y": 925000}, {"x": "2022-01", "y": 397500}, {"x": "2022-02", "y": 1207500}, {"x": "2022-03", "y": 766538}, {"x": "2022-04", "y": 944815}, {"x": "2022-05", "y": 809362}, {"x": "2022-06", "y": 951133}, {"x": "2022-07", "y": 983333}, {"x": "2022-08", "y": 859464}, {"x": "2022-09", "y": 841304}, {"x": "2022-10", "y": 1403125}, {"x": "2022-11", "y": 778889}, {"x": "2022-12", "y": 495000}, {"x": "2023-01", "y": 1531667}, {"x": "2023-02", "y": 1246667}, {"x": "2023-03", "y": 1088889}, {"x": "2023-04", "y": 858000}, {"x": "2023-05", "y": 870152}, {"x": "2023-06", "y": 901860}, {"x": "2023-07", "y": 700833}, {"x": "2023-08", "y": 921633}, {"x": "2023-09", "y": 803409}, {"x": "2023-10", "y": 819917}, {"x": "2023-11", "y": 1897500}, {"x": "2023-12", "y": 185000}, {"x": "2024-01", "y": 550000}, {"x": "2024-02", "y": 2493750}, {"x": "2024-03", "y": 1153636}, {"x": "2024-04", "y": 770588}, {"x": "2024-05", "y": 818208}, {"x": "2024-06", "y": 1018605}, {"x": "2024-07", "y": 862344}, {"x": "2024-08", "y": 676852}, {"x": "2024-09", "y": 1108182}, {"x": "2024-10", "y": 1636429}, {"x": "2024-11", "y": 1375000}, {"x": "2024-12", "y": 626667}, {"x": "2025-01", "y": 370000}, {"x": "2025-02", "y": 1391000}, {"x": "2025-03", "y": 969524}, {"x": "2025-04", "y": 1238088}, {"x": "2025-05", "y": 985455}, {"x": "2025-06", "y": 688194}, {"x": "2025-07", "y": 1177826}, {"x": "2025-08", "y": 998375}, {"x": "2025-09", "y": 949444}, {"x": "2025-10", "y": 850000}, {"x": "2025-11", "y": 422500}, {"x": "2025-12", "y": 395000}, {"x": "2026-01", "y": 550000}, {"x": "2026-03", "y": 1011667}, {"x": "2026-04", "y": 1262679}, {"x": "2026-05", "y": 1079688}], "supply": [{"x": "2020-01", "y": 25}, {"x": "2020-02", "y": 26}, {"x": "2020-03", "y": 43}, {"x": "2020-04", "y": 89}, {"x": "2020-05", "y": 79}, {"x": "2020-06", "y": 93}, {"x": "2020-07", "y": 67}, {"x": "2020-08", "y": 57}, {"x": "2020-09", "y": 57}, {"x": "2020-10", "y": 37}, {"x": "2020-11", "y": 16}, {"x": "2020-12", "y": 14}, {"x": "2021-01", "y": 13}, {"x": "2021-02", "y": 17}, {"x": "2021-03", "y": 39}, {"x": "2021-04", "y": 59}, {"x": "2021-05", "y": 113}, {"x": "2021-06", "y": 122}, {"x": "2021-07", "y": 86}, {"x": "2021-08", "y": 77}, {"x": "2021-09", "y": 64}, {"x": "2021-10", "y": 36}, {"x": "2021-11", "y": 25}, {"x": "2021-12", "y": 16}, {"x": "2022-01", "y": 11}, {"x": "2022-02", "y": 16}, {"x": "2022-03", "y": 27}, {"x": "2022-04", "y": 46}, {"x": "2022-05", "y": 83}, {"x": "2022-06", "y": 91}, {"x": "2022-07", "y": 80}, {"x": "2022-08", "y": 81}, {"x": "2022-09", "y": 80}, {"x": "2022-10", "y": 60}, {"x": "2022-11", "y": 49}, {"x": "2022-12", "y": 35}, {"x": "2023-01", "y": 32}, {"x": "2023-02", "y": 32}, {"x": "2023-03", "y": 39}, {"x": "2023-04", "y": 56}, {"x": "2023-05", "y": 81}, {"x": "2023-06", "y": 96}, {"x": "2023-07", "y": 85}, {"x": "2023-08", "y": 96}, {"x": "2023-09", "y": 92}, {"x": "2023-10", "y": 69}, {"x": "2023-11", "y": 47}, {"x": "2023-12", "y": 39}, {"x": "2024-01", "y": 38}, {"x": "2024-02", "y": 42}, {"x": "2024-03", "y": 51}, {"x": "2024-04", "y": 64}, {"x": "2024-05", "y": 111}, {"x": "2024-06", "y": 123}, {"x": "2024-07", "y": 121}, {"x": "2024-08", "y": 119}, {"x": "2024-09", "y": 100}, {"x": "2024-10", "y": 73}, {"x": "2024-11", "y": 64}, {"x": "2024-12", "y": 50}, {"x": "2025-01", "y": 48}, {"x": "2025-02", "y": 47}, {"x": "2025-03", "y": 66}, {"x": "2025-04", "y": 99}, {"x": "2025-05", "y": 120}, {"x": "2025-06", "y": 129}, {"x": "2025-07", "y": 120}, {"x": "2025-08", "y": 123}, {"x": "2025-09", "y": 104}, {"x": "2025-10", "y": 93}, {"x": "2025-11", "y": 81}, {"x": "2025-12", "y": 66}, {"x": "2026-01", "y": 57}, {"x": "2026-02", "y": 51}, {"x": "2026-03", "y": 66}, {"x": "2026-04", "y": 89}, {"x": "2026-05", "y": 111}]}};
+
+  window.switchChartType = function(type, btn) {
+    btn.closest('.type-filter').querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const pd = typeData[type];
+    if (!pd) return;
+    if (pd.price && pd.price.length) {
+      priceChart.data.labels   = pd.price.map(p => p.x);
+      priceChart.data.datasets[0].data = pd.price.map(p => p.y);
+      priceChart.update();
+    }
+    if (pd.supply && pd.supply.length) {
+      supplyChart.data.labels   = pd.supply.map(p => p.x);
+      supplyChart.data.datasets[0].data = pd.supply.map(p => p.y);
+      supplyChart.update();
+    }
+  };
+})();
+</script>
+
+<footer>
+  <p>Marknadsdata hämtad från <a href="https://www.hemnet.se/statistik" target="_blank">Hemnet Bostadsstatistik</a> via öppet GraphQL-API.</p>
+  <p style="margin-top:6px">Genomsnittliga utgångspriser och utbudsdata per månad, alla bostadstyper. Senast uppdaterad maj 2026.</p>
+</footer>
+</body></html>
